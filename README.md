@@ -1,56 +1,80 @@
-# Welcome to your Expo app 👋
+# AI Coach
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+Application mobile Expo (iOS, Android et web) pour un coach IA. Le dépôt part du template Expo Router par défaut, mis à jour pour **Expo SDK 58**, avec NativeWind et une configuration publique Supabase.
 
-## Get started
+## Environnement vérifié
 
-1. Install dependencies
+| Outil | Version relevée | Exigence |
+| --- | --- | --- |
+| Node.js | 22.14.0 | 22.13 ou plus sur la branche 22 |
+| npm | 11.6.1 | — |
+| Expo CLI | 58.1.18 | livré avec le SDK |
+| Expo SDK | 58.0.22 | Expo Go du store = SDK 58 |
+| Expo Router | 58.0.29 | routes dans `src/app/` |
+| React | 19.3.0 | version imposée par le SDK |
+| React Native | 0.88.1 | version imposée par le SDK |
+| TypeScript | 6.0.3 | — |
+| NativeWind | 4.2.7 | Tailwind dans les composants |
 
-   ```bash
-   npm install
-   ```
+Expo Go installé depuis le store ne charge que le SDK 58. Un projet SDK 57 est refusé. Il n’y a pas de dossiers `ios/` ni `android/` : les projets natifs sont générés au build (Continuous Native Generation).
 
-2. Start the app
+## Template Expo
 
-   ```bash
-   npx expo start
-   ```
+Le projet vient de `create-expo-app` (template par défaut), pas d’un template métier.
 
-In the output, you'll find options to open the app in a
+- Navigation par fichiers avec Expo Router, racine `src/app/`.
+- Deux onglets de démo : Accueil (`src/app/index.tsx`) et Explore (`src/app/explore.tsx`).
+- Onglets natifs sur mobile, onglets web dans `src/components/app-tabs.web.tsx`.
+- Compilateur React et routes typées activés dans `app.json`.
+- Schéma de lien : `aicoach`.
+- NativeWind branché dans `babel.config.js`, `metro.config.js` et `src/global.css`.
+- Les variables publiques passent par `src/lib/env.ts` (Zod). Le client Supabase n’est pas encore installé.
 
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
+`npm run reset-project` déplace encore cet écran de démo. Ne le lance pas une fois les écrans du coach en place.
 
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
+## Structure des dossiers
 
-## Get a fresh project
+État actuel, à conserver :
 
-When you're ready, run:
-
-```bash
-npm run reset-project
+```text
+assets/                 icônes, splash, images
+src/app/                écrans et layouts (une fichier = une route)
+src/components/         UI partagée du template
+src/constants/          thème
+src/hooks/              thème et color scheme
+src/lib/                validation d’environnement
+scripts/                reset du template
 ```
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+Les écrans restent dans `src/app/`. Le reste du code reste en dehors, importé avec l’alias `@/`.
 
-### Other setup steps
+Dossiers à ajouter quand la fonctionnalité existe, sans déplacer le template maintenant :
 
-- To set up ESLint for linting, run `npx expo lint`, or follow our guide on ["Using ESLint and Prettier"](https://docs.expo.dev/guides/using-eslint/)
-- If you'd like to set up unit testing, follow our guide on ["Unit Testing with Jest"](https://docs.expo.dev/develop/unit-testing/)
-- Learn more about the TypeScript setup in this template in our guide on ["Using TypeScript"](https://docs.expo.dev/guides/typescript/)
+```text
+src/features/coach/     conversation, séance, messages
+src/features/profile/   préférences du coaché
+src/lib/supabase.ts     client Supabase
+src/lib/api/            appels réseau hors Supabase
+```
 
-## Learn more
+## Démarrage
 
-To learn more about developing your project with Expo, look at the following resources:
+```bash
+npm install
+copy .env.example .env
+npx expo start
+```
 
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
+Renseigne `.env`, puis relance Expo : les variables `EXPO_PUBLIC_*` sont figées au démarrage de Metro. Ouvre le projet dans Expo Go (SDK 58) sur le même Wi-Fi.
 
-## Join the community
+Commandes utiles :
 
-Join our community of developers creating universal apps.
+```bash
+npm run lint
+npm test
+npx tsc --noEmit
+```
 
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+## Configuration
+
+Copie [`.env.example`](.env.example) vers `.env`. Le fichier `.env` est ignoré par Git. N’y place jamais la clé `service_role` ni une clé Gemini : tout nom qui commence par `EXPO_PUBLIC_` est inclus dans l’application.
