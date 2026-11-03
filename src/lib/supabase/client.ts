@@ -3,7 +3,10 @@ import { AppState, Platform } from 'react-native';
 
 import { publicEnvResult } from '@/config/public-env';
 
+import { type Database } from './database.types';
 import { sessionStorage } from './session-storage';
+
+export type AppSupabaseClient = SupabaseClient<Database>;
 
 export class SupabaseConfigurationError extends Error {
   constructor() {
@@ -12,9 +15,9 @@ export class SupabaseConfigurationError extends Error {
   }
 }
 
-let client: SupabaseClient | undefined;
+let client: AppSupabaseClient | undefined;
 
-function keepTokenRefreshInSyncWithAppState(supabase: SupabaseClient) {
+function keepTokenRefreshInSyncWithAppState(supabase: AppSupabaseClient) {
   if (Platform.OS === 'web') return;
   AppState.addEventListener('change', (state) => {
     if (state === 'active') {
@@ -30,11 +33,11 @@ function keepTokenRefreshInSyncWithAppState(supabase: SupabaseClient) {
  * key, so every query runs as `anon` or `authenticated` and stays subject to
  * Row Level Security. Privileged work belongs in Edge Functions.
  */
-export function getSupabaseClient(): SupabaseClient {
+export function getSupabaseClient(): AppSupabaseClient {
   if (client) return client;
   if (!publicEnvResult.success) throw new SupabaseConfigurationError();
 
-  client = createClient(
+  client = createClient<Database>(
     publicEnvResult.env.supabaseUrl,
     publicEnvResult.env.supabasePublishableKey,
     {

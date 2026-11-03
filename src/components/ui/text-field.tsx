@@ -1,5 +1,11 @@
-import { useId, useState } from 'react';
-import { StyleSheet, TextInput, type TextInputProps, View } from 'react-native';
+import { type ReactNode, type Ref, useId, useState } from 'react';
+import {
+  StyleSheet,
+  TextInput,
+  type TextInputInstance,
+  type TextInputProps,
+  View,
+} from 'react-native';
 
 import { layout, radius, spacing, typography, useTheme } from '@/design';
 
@@ -9,12 +15,17 @@ export type TextFieldProps = Omit<TextInputProps, 'style' | 'placeholderTextColo
   label: string;
   helperText?: string;
   errorText?: string;
+  /** Rendered inside the field after the input, e.g. a visibility toggle. */
+  trailing?: ReactNode;
+  ref?: Ref<TextInputInstance>;
 };
 
 export function TextField({
   label,
   helperText,
   errorText,
+  trailing,
+  ref,
   onFocus,
   onBlur,
   ...inputProps
@@ -31,30 +42,27 @@ export function TextField({
       <Text variant="label" color="textSecondary">
         {label}
       </Text>
-      <TextInput
-        aria-label={label}
-        aria-describedby={helperText || errorText ? descriptionId : undefined}
-        aria-invalid={hasError}
-        placeholderTextColor={colors.textTertiary}
-        selectionColor={colors.primary}
-        onFocus={(event) => {
-          setIsFocused(true);
-          onFocus?.(event);
-        }}
-        onBlur={(event) => {
-          setIsFocused(false);
-          onBlur?.(event);
-        }}
-        style={[
-          styles.input,
-          {
-            color: colors.text,
-            backgroundColor: colors.surface,
-            borderColor,
-          },
-        ]}
-        {...inputProps}
-      />
+      <View style={[styles.field, { backgroundColor: colors.surface, borderColor }]}>
+        <TextInput
+          ref={ref}
+          aria-label={label}
+          aria-describedby={helperText || errorText ? descriptionId : undefined}
+          aria-invalid={hasError}
+          placeholderTextColor={colors.textTertiary}
+          selectionColor={colors.primary}
+          onFocus={(event) => {
+            setIsFocused(true);
+            onFocus?.(event);
+          }}
+          onBlur={(event) => {
+            setIsFocused(false);
+            onBlur?.(event);
+          }}
+          style={[styles.input, { color: colors.text }]}
+          {...inputProps}
+        />
+        {trailing}
+      </View>
       {hasError ? (
         <Text nativeID={descriptionId} variant="caption" color="danger" role="alert">
           {errorText}
@@ -72,11 +80,17 @@ const styles = StyleSheet.create({
   container: {
     gap: spacing.xs,
   },
-  input: {
-    ...typography.body,
+  field: {
+    flexDirection: 'row',
+    alignItems: 'center',
     minHeight: layout.minTouchTarget + 4,
     borderWidth: 1.5,
     borderRadius: radius.md,
+  },
+  input: {
+    ...typography.body,
+    flex: 1,
+    alignSelf: 'stretch',
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.sm,
   },

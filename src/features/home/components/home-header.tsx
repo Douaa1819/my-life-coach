@@ -5,7 +5,8 @@ import { spacing } from '@/design';
 
 type HomeHeaderProps = {
   greeting: string;
-  firstName: string;
+  /** Null while the profile loads or if it cannot be read. */
+  firstName: string | null;
   dateLabel: string;
   streakDays: number;
 };
@@ -17,7 +18,7 @@ export function HomeHeader({ greeting, firstName, dateLabel, streakDays }: HomeH
         {dateLabel}
       </Text>
       <Text variant="display" role="heading">
-        {greeting}, {firstName}
+        {firstName ? `${greeting}, ${firstName}` : greeting}
       </Text>
       {streakDays > 0 && <Chip tone="accent" icon="streak" label={`${streakDays}-day streak`} />}
     </View>

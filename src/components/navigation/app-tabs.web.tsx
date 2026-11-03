@@ -41,7 +41,10 @@ export function AppTabs() {
       <TabSlot style={styles.slot} />
       <TabList asChild>
         <View
-          style={[styles.bar, { backgroundColor: colors.surface, borderTopColor: colors.border }]}>
+          style={StyleSheet.flatten([
+            styles.bar,
+            { backgroundColor: colors.surface, borderTopColor: colors.border },
+          ])}>
           {tabRoutes.map((tab) => (
             <TabTrigger key={tab.name} name={tab.name} href={tab.href} asChild>
               <TabButton label={tab.label} icon={tab.icon} />

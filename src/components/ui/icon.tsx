@@ -19,6 +19,13 @@ export const iconMap = {
   progress: { ios: 'chart.line.uptrend.xyaxis', android: 'trending_up' },
   retry: { ios: 'arrow.clockwise', android: 'refresh' },
   settings: { ios: 'gearshape', android: 'settings' },
+  mail: { ios: 'envelope', android: 'mail' },
+  visible: { ios: 'eye', android: 'visibility' },
+  hidden: { ios: 'eye.slash', android: 'visibility_off' },
+  signOut: { ios: 'rectangle.portrait.and.arrow.right', android: 'logout' },
+  verified: { ios: 'checkmark.seal', android: 'verified' },
+  key: { ios: 'key', android: 'key' },
+  info: { ios: 'info.circle', android: 'info' },
 } as const satisfies Record<string, { ios: SFSymbol; android: AndroidSymbol }>;
 
 export type IconName = keyof typeof iconMap;

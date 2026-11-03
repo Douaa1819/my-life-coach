@@ -5,6 +5,7 @@ import { RefreshControl } from 'react-native';
 import { Chip, ErrorState, LoadingState, Screen } from '@/components/ui';
 import { useTheme } from '@/design';
 import { getDailyProgress } from '@/features/missions/daily-progress';
+import { useProfile } from '@/features/profile/use-profile';
 
 import { CoachEntryCard } from './components/coach-entry-card';
 import { DailyProgressCard } from './components/daily-progress-card';
@@ -18,6 +19,7 @@ import { useTodayOverview, useToggleMission } from './use-today-overview';
 export function HomeScreen({ now = new Date() }: { now?: Date }) {
   const { colors } = useTheme();
   const overview = useTodayOverview();
+  const profile = useProfile();
   const toggleMission = useToggleMission();
 
   const progress = useMemo(
@@ -51,15 +53,18 @@ export function HomeScreen({ now = new Date() }: { now?: Date }) {
       refreshControl={
         <RefreshControl
           refreshing={overview.isRefetching}
-          onRefresh={() => void overview.refetch()}
+          onRefresh={() => {
+            void overview.refetch();
+            void profile.refetch();
+          }}
           tintColor={colors.primary}
           colors={[colors.primary]}
         />
       }>
-      {TODAY_OVERVIEW_IS_SAMPLE && <Chip label="Sample data · not saved" />}
+      {TODAY_OVERVIEW_IS_SAMPLE && <Chip label="Sample plan · not saved" />}
       <HomeHeader
         greeting={getGreeting(now)}
-        firstName={data.firstName}
+        firstName={profile.data?.displayName ?? null}
         dateLabel={formatTodayLabel(now)}
         streakDays={data.streakDays}
       />

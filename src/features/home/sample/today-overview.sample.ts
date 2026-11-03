@@ -6,7 +6,6 @@ import { type TodayOverview } from '../today-overview.schema';
  * `getTodayOverview` reads from Supabase.
  */
 export const sampleTodayOverview: TodayOverview = {
-  firstName: 'Sara',
   streakDays: 6,
   coachSuggestion:
     'You skipped your evening review twice this week. Want to make it 5 minutes instead of 15?',

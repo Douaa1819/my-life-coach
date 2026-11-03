@@ -8,11 +8,20 @@ const safeAreaMetrics = {
   insets: { top: 0, left: 0, right: 0, bottom: 0 },
 };
 
-export function renderWithProviders(element: ReactElement) {
-  const queryClient = new QueryClient({
-    defaultOptions: { queries: { retry: false, gcTime: Infinity } },
+export function createTestQueryClient() {
+  return new QueryClient({
+    // Infinity schedules no garbage-collection timers, which would keep Jest alive.
+    defaultOptions: {
+      queries: { retry: false, gcTime: Infinity },
+      mutations: { gcTime: Infinity },
+    },
   });
+}
 
+export function renderWithProviders(
+  element: ReactElement,
+  { queryClient = createTestQueryClient() }: { queryClient?: QueryClient } = {},
+) {
   function TestProviders({ children }: { children: ReactNode }) {
     return (
       <SafeAreaProvider initialMetrics={safeAreaMetrics}>

@@ -2,6 +2,8 @@ export { Button, type ButtonProps } from './button';
 export { Card, type CardProps } from './card';
 export { Chip } from './chip';
 export { Icon, type IconName } from './icon';
+export { InlineMessage } from './inline-message';
+export { PasswordField } from './password-field';
 export { ProgressBar } from './progress-bar';
 export { Screen } from './screen';
 export { SectionHeader } from './section-header';
