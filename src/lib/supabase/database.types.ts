@@ -3,6 +3,49 @@ export type Json = string | number | boolean | null | { [key: string]: Json | un
 export type Database = {
   public: {
     Tables: {
+      goals: {
+        Row: {
+          category: string;
+          completed_at: string | null;
+          created_at: string;
+          description: string | null;
+          horizon: string;
+          id: string;
+          status: string;
+          target_date: string | null;
+          title: string;
+          updated_at: string;
+          user_id: string;
+        };
+        ComputedFields: never;
+        Insert: {
+          category: string;
+          completed_at?: string | null;
+          created_at?: string;
+          description?: string | null;
+          horizon: string;
+          id?: string;
+          status?: string;
+          target_date?: string | null;
+          title: string;
+          updated_at?: string;
+          user_id: string;
+        };
+        Update: {
+          category?: string;
+          completed_at?: string | null;
+          created_at?: string;
+          description?: string | null;
+          horizon?: string;
+          id?: string;
+          status?: string;
+          target_date?: string | null;
+          title?: string;
+          updated_at?: string;
+          user_id?: string;
+        };
+        Relationships: [];
+      };
       profiles: {
         Row: {
           avatar_url: string | null;
@@ -34,12 +77,56 @@ export type Database = {
         };
         Relationships: [];
       };
+      user_preferences: {
+        Row: {
+          coach_tone: string;
+          created_at: string;
+          daily_minutes: number;
+          focus_areas: string[];
+          reminder_time: string | null;
+          updated_at: string;
+          user_id: string;
+        };
+        ComputedFields: never;
+        Insert: {
+          coach_tone: string;
+          created_at?: string;
+          daily_minutes: number;
+          focus_areas: string[];
+          reminder_time?: string | null;
+          updated_at?: string;
+          user_id: string;
+        };
+        Update: {
+          coach_tone?: string;
+          created_at?: string;
+          daily_minutes?: number;
+          focus_areas?: string[];
+          reminder_time?: string | null;
+          updated_at?: string;
+          user_id?: string;
+        };
+        Relationships: [];
+      };
     };
     Views: {
       [_ in never]: never;
     };
     Functions: {
-      [_ in never]: never;
+      complete_onboarding: {
+        Args: {
+          p_coach_tone: string;
+          p_daily_minutes: number;
+          p_display_name: string;
+          p_focus_areas: string[];
+          p_goal_category: string;
+          p_goal_description?: string;
+          p_goal_horizon: string;
+          p_goal_title: string;
+          p_reminder_time?: string;
+        };
+        Returns: undefined;
+      };
     };
     Enums: {
       [_ in never]: never;

@@ -9,6 +9,7 @@ import {
 
 import { layout, radius, spacing, typography, useTheme } from '@/design';
 
+import { Icon } from './icon';
 import { Text } from './text';
 
 export type TextFieldProps = Omit<TextInputProps, 'style' | 'placeholderTextColor'> & {
@@ -28,6 +29,7 @@ export function TextField({
   ref,
   onFocus,
   onBlur,
+  multiline,
   ...inputProps
 }: TextFieldProps) {
   const { colors } = useTheme();
@@ -35,21 +37,28 @@ export function TextField({
   const descriptionId = useId();
   const hasError = Boolean(errorText);
 
-  const borderColor = hasError ? colors.danger : isFocused ? colors.primary : colors.border;
+  const borderColor = hasError ? colors.dangerIcon : isFocused ? colors.brand : colors.borderStrong;
 
   return (
     <View style={styles.container}>
-      <Text variant="label" color="textSecondary">
-        {label}
-      </Text>
-      <View style={[styles.field, { backgroundColor: colors.surface, borderColor }]}>
+      <Text variant="label">{label}</Text>
+      <View
+        style={[
+          styles.field,
+          multiline && styles.multiline,
+          { backgroundColor: colors.surface, borderColor },
+          // The outline doubles the border on focus without shifting the text.
+          (isFocused || hasError) && { outlineColor: borderColor, outlineWidth: 1 },
+        ]}>
         <TextInput
           ref={ref}
           aria-label={label}
           aria-describedby={helperText || errorText ? descriptionId : undefined}
           aria-invalid={hasError}
           placeholderTextColor={colors.textTertiary}
-          selectionColor={colors.primary}
+          selectionColor={colors.brand}
+          multiline={multiline}
+          textAlignVertical={multiline ? 'top' : 'center'}
           onFocus={(event) => {
             setIsFocused(true);
             onFocus?.(event);
@@ -64,11 +73,19 @@ export function TextField({
         {trailing}
       </View>
       {hasError ? (
-        <Text nativeID={descriptionId} variant="caption" color="danger" role="alert">
-          {errorText}
-        </Text>
+        <View style={styles.message}>
+          <Icon name="error" size={16} color={colors.dangerIcon} />
+          <Text
+            nativeID={descriptionId}
+            variant="bodySmall"
+            color="danger"
+            role="alert"
+            style={styles.messageText}>
+            {errorText}
+          </Text>
+        </View>
       ) : helperText ? (
-        <Text nativeID={descriptionId} variant="caption" color="textSecondary">
+        <Text nativeID={descriptionId} variant="bodySmall" color="textSecondary">
           {helperText}
         </Text>
       ) : null}
@@ -83,9 +100,13 @@ const styles = StyleSheet.create({
   field: {
     flexDirection: 'row',
     alignItems: 'center',
-    minHeight: layout.minTouchTarget + 4,
-    borderWidth: 1.5,
+    minHeight: layout.fieldHeight,
+    borderWidth: 1,
     borderRadius: radius.md,
+  },
+  multiline: {
+    minHeight: 112,
+    alignItems: 'stretch',
   },
   input: {
     ...typography.body,
@@ -93,5 +114,13 @@ const styles = StyleSheet.create({
     alignSelf: 'stretch',
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.sm,
+  },
+  message: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: spacing.xxs,
+  },
+  messageText: {
+    flex: 1,
   },
 });

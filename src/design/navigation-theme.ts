@@ -13,7 +13,7 @@ export function toNavigationTheme(theme: Theme): NavigationTheme {
       card: theme.colors.background,
       text: theme.colors.text,
       border: theme.colors.border,
-      notification: theme.colors.accent,
+      notification: theme.colors.brand,
     },
   };
 }

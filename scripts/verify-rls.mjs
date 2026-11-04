@@ -134,6 +134,86 @@ try {
 
   const bobSeesAlice = await bob.client.from('profiles').select('id').eq('id', alice.id);
   check('the second user cannot read the first either', bobSeesAlice.data?.length === 0);
+
+  // Onboarding: the only write path for preferences and goals.
+  const onboardingArgs = {
+    p_display_name: 'Alice',
+    p_focus_areas: ['health'],
+    p_goal_title: 'Run 5 km',
+    p_goal_category: 'health',
+    p_goal_horizon: '6_months',
+    p_daily_minutes: 15,
+    p_coach_tone: 'gentle',
+    p_goal_description: 'More energy',
+    p_reminder_time: '08:00',
+  };
+
+  const anonOnboarding = await anonymous.rpc('complete_onboarding', onboardingArgs);
+  check(
+    'signed-out requests cannot complete onboarding',
+    Boolean(anonOnboarding.error),
+    'no error',
+  );
+
+  const directGoal = await alice.client.from('goals').insert({
+    user_id: alice.id,
+    title: 'Sneaky goal',
+    category: 'health',
+    horizon: '1_year',
+  });
+  check('clients cannot insert goals directly', directGoal.error?.code === '42501');
+
+  const directPreferences = await alice.client.from('user_preferences').insert({
+    user_id: alice.id,
+    focus_areas: ['health'],
+    daily_minutes: 5,
+    coach_tone: 'gentle',
+  });
+  check('clients cannot insert preferences directly', directPreferences.error?.code === '42501');
+
+  const invalidOnboarding = await alice.client.rpc('complete_onboarding', {
+    ...onboardingArgs,
+    p_focus_areas: ['health', 'career', 'learning', 'finance'],
+  });
+  check(
+    'invalid onboarding answers are rejected by the database',
+    invalidOnboarding.error?.code === '22023',
+    invalidOnboarding.error?.code ?? 'no error',
+  );
+
+  const completed = await alice.client.rpc('complete_onboarding', onboardingArgs);
+  check('a user can complete onboarding', !completed.error, completed.error?.code);
+
+  const aliceProfile = await alice.client.from('profiles').select('onboarding_completed').single();
+  check('onboarding is marked complete', aliceProfile.data?.onboarding_completed === true);
+
+  const again = await alice.client.rpc('complete_onboarding', onboardingArgs);
+  check(
+    'onboarding cannot be completed twice',
+    again.error?.code === 'P0001' && again.error.message === 'already_completed',
+    again.error?.code ?? 'no error',
+  );
+
+  const aliceGoals = await alice.client.from('goals').select('user_id, title');
+  check(
+    'a user reads exactly their own goal',
+    aliceGoals.data?.length === 1 && aliceGoals.data[0].user_id === alice.id,
+  );
+
+  const bobGoals = await bob.client.from('goals').select('id');
+  check("the other user cannot read the first user's goals", bobGoals.data?.length === 0);
+
+  const bobPreferences = await bob.client.from('user_preferences').select('user_id');
+  check(
+    "the other user cannot read the first user's preferences",
+    bobPreferences.data?.length === 0,
+  );
+
+  const bobProfileAfter = await bob.client.from('profiles').select('onboarding_completed').single();
+  check(
+    "the other user's onboarding state is unchanged",
+    bobProfileAfter.data?.onboarding_completed === false,
+  );
 } finally {
   await admin.auth.admin.deleteUser(alice.id);
   await admin.auth.admin.deleteUser(bob.id);

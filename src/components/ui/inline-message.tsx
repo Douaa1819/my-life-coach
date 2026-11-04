@@ -17,9 +17,17 @@ const toneIcon: Record<InlineMessageTone, IconName> = {
 export function InlineMessage({ tone, message }: { tone: InlineMessageTone; message: string }) {
   const { colors } = useTheme();
   const palette = {
-    danger: { background: colors.dangerContainer, foreground: colors.onDangerContainer },
-    info: { background: colors.surfaceMuted, foreground: colors.text },
-    success: { background: colors.primaryContainer, foreground: colors.onPrimaryContainer },
+    danger: {
+      background: colors.dangerContainer,
+      icon: colors.dangerIcon,
+      foreground: colors.onDangerContainer,
+    },
+    info: { background: colors.primaryContainer, icon: colors.brand, foreground: colors.text },
+    success: {
+      background: colors.successContainer,
+      icon: colors.success,
+      foreground: colors.successText,
+    },
   }[tone];
 
   return (
@@ -27,7 +35,7 @@ export function InlineMessage({ tone, message }: { tone: InlineMessageTone; mess
       role={tone === 'danger' ? 'alert' : undefined}
       aria-live={tone === 'danger' ? 'assertive' : 'polite'}
       style={[styles.container, { backgroundColor: palette.background }]}>
-      <Icon name={toneIcon[tone]} size={18} color={palette.foreground} />
+      <Icon name={toneIcon[tone]} size={20} color={palette.icon} />
       <Text variant="body" style={[styles.message, { color: palette.foreground }]}>
         {message}
       </Text>

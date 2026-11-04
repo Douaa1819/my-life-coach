@@ -12,7 +12,7 @@ export function AppTabs() {
     <NativeTabs
       backgroundColor={colors.surface}
       indicatorColor={colors.primaryContainer}
-      iconColor={{ default: colors.textSecondary, selected: colors.onPrimaryContainer }}
+      iconColor={{ default: colors.textSecondary, selected: colors.primary }}
       labelStyle={{
         default: { color: colors.textSecondary },
         selected: { color: colors.text },

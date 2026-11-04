@@ -34,7 +34,7 @@ export function AuthFeedback({
             styles.badge,
             { backgroundColor: isDanger ? colors.dangerContainer : colors.primaryContainer },
           ]}>
-          <Icon name={icon} size={32} color={isDanger ? colors.danger : colors.primary} />
+          <Icon name={icon} size={32} color={isDanger ? colors.dangerIcon : colors.brand} />
         </View>
         <View style={styles.copy}>
           <Text variant="title" role="heading" align="center">

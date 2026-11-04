@@ -72,6 +72,10 @@
   },
   "jest": {
     "preset": "jest-expo",
+    "resolver": "<rootDir>/src/test/jest-resolver.js",
+    "setupFilesAfterEnv": [
+      "<rootDir>/src/test/jest-setup.ts"
+    ],
     "testMatch": [
       "<rootDir>/src/**/__tests__/**/*.test.[jt]s?(x)"
     ],

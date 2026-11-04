@@ -20,7 +20,7 @@ export function HomeHeader({ greeting, firstName, dateLabel, streakDays }: HomeH
       <Text variant="display" role="heading">
         {firstName ? `${greeting}, ${firstName}` : greeting}
       </Text>
-      {streakDays > 0 && <Chip tone="accent" icon="streak" label={`${streakDays}-day streak`} />}
+      {streakDays > 0 && <Chip tone="warning" icon="streak" label={`${streakDays}-day streak`} />}
     </View>
   );
 }

@@ -66,12 +66,12 @@ function MessageState({
 }: Required<Pick<MessageStateProps, 'icon'>> & MessageStateProps & { tone: 'primary' | 'danger' }) {
   const { colors } = useTheme();
   const iconBackground = tone === 'danger' ? colors.dangerContainer : colors.primaryContainer;
-  const iconColor = tone === 'danger' ? colors.danger : colors.primary;
+  const iconColor = tone === 'danger' ? colors.dangerIcon : colors.brand;
 
   return (
     <View style={styles.centered} role={tone === 'danger' ? 'alert' : undefined}>
       <View style={[styles.iconBadge, { backgroundColor: iconBackground }]}>
-        <Icon name={icon} size={28} color={iconColor} />
+        <Icon name={icon} size={32} color={iconColor} />
       </View>
       <View style={styles.copy}>
         <Text variant="headline" align="center">
@@ -96,8 +96,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.lg,
   },
   iconBadge: {
-    width: 64,
-    height: 64,
+    width: 72,
+    height: 72,
     borderRadius: radius.pill,
     alignItems: 'center',
     justifyContent: 'center',
