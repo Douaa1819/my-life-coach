@@ -54,26 +54,44 @@ export function fadeTo(toValue: number, duration: DurationName = 'fast') {
 }
 
 /**
- * Spring press feedback for buttons and cards. Under reduced motion the scale
- * stays at 1 and only the pressed color remains.
+ * Spring press scale only, without re-rendering on press. Use it when the
+ * pressed state needs no color change. Under reduced motion the scale stays at 1.
  */
-export function usePressFeedback(pressedScale: number) {
+export function usePressScale(pressedScale: number) {
   const { reduceMotion } = useMotionPreference();
-  const [pressed, setPressed] = useState(false);
   const scale = useSharedValue(1);
 
   const animatedStyle = useAnimatedStyle(() => ({ transform: [{ scale: scale.get() }] }));
 
   return {
-    pressed,
     animatedStyle,
     onPressIn: () => {
-      setPressed(true);
       if (!reduceMotion) scale.set(springTo(pressedScale, 'press'));
     },
     onPressOut: () => {
-      setPressed(false);
       scale.set(springTo(1, 'press'));
+    },
+  };
+}
+
+/**
+ * Spring press feedback for buttons and cards. Under reduced motion the scale
+ * stays at 1 and only the pressed color remains.
+ */
+export function usePressFeedback(pressedScale: number) {
+  const press = usePressScale(pressedScale);
+  const [pressed, setPressed] = useState(false);
+
+  return {
+    pressed,
+    animatedStyle: press.animatedStyle,
+    onPressIn: () => {
+      setPressed(true);
+      press.onPressIn();
+    },
+    onPressOut: () => {
+      setPressed(false);
+      press.onPressOut();
     },
   };
 }
