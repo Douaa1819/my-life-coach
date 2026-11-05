@@ -14,7 +14,10 @@ export type SpringName = keyof typeof motion.spring;
 export type DurationName = keyof typeof motion.duration;
 export type EasingName = keyof typeof motion.easing;
 
-/** Android "Remove animations" and iOS Reduce Motion, read once per mount. */
+/**
+ * Android "Remove animations" and iOS Reduce Motion. Reanimated reads the setting
+ * once at app launch: a change while the app runs applies after a restart.
+ */
 export function useMotionPreference() {
   const reduceMotion = useReducedMotion();
   return { reduceMotion };

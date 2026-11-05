@@ -4,6 +4,7 @@ import { useRef } from 'react';
 import { type TextInputInstance } from 'react-native';
 
 import { Button, InlineMessage, PasswordField, Text, TextField } from '@/components/ui';
+import { DISPLAY_NAME_MAX_LENGTH } from '@/features/profile/profile.schema';
 import { useZodForm } from '@/lib/forms/use-zod-form';
 
 import { signUp } from '../auth.api';
@@ -51,7 +52,7 @@ export function SignUpScreen() {
         autoComplete="given-name"
         textContentType="givenName"
         autoCapitalize="words"
-        maxLength={50}
+        maxLength={DISPLAY_NAME_MAX_LENGTH}
         returnKeyType="next"
         submitBehavior="submit"
         onSubmitEditing={() => emailRef.current?.focus()}

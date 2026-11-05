@@ -10,6 +10,7 @@ import {
   useRef,
 } from 'react';
 
+import { onboardingDraftStore } from '@/features/onboarding/onboarding-draft';
 import { getSupabaseClient } from '@/lib/supabase/client';
 
 import { signOut as signOutRequest } from './auth.api';
@@ -46,6 +47,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
     previousUserId.current = userId;
   }, [userId, queryClient]);
+
+  // Saves still queued for that user are dropped by the store, so the draft cannot reappear.
+  const { endedSession } = state;
+  useEffect(() => {
+    if (endedSession) void onboardingDraftStore.clear(endedSession.userId);
+  }, [endedSession]);
 
   const signOut = useCallback(async () => {
     dispatch({ type: 'signOutRequested' });

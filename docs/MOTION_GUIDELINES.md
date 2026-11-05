@@ -173,13 +173,15 @@ Honor Android's **Remove animations** setting (and iOS Reduce Motion). Reanimate
 
 Reduced motion never removes **information**: every state change still shows (color, icon, text), and screen readers get the same announcements.
 
+Reanimated reads the system setting **once at app launch**. Changing it while the app is running takes effect after the app restarts.
+
 ---
 
 ## 7. Performance rules
 
 Target: 60 fps on a mid-range Android phone (for example a 2022 Samsung Galaxy A-series), no dropped frames on touch response.
 
-1. **Animate `transform` and `opacity` only** for anything frequent. Width-based progress uses `transform: scaleX` with a left origin, not `width`. Colors may animate on small elements (borders, chip fills) via Reanimated, never on large surfaces.
+1. **Animate `transform` and `opacity` only** for anything frequent. Width-based progress uses a transform, not `width`: the implemented `ProgressBar` slides a full-width, pill-shaped fill with `translateX` inside a track that clips it (`overflow: hidden`). `scaleX` would also stay on the UI thread, but it stretches the rounded end so a short fill looks squashed. Colors may animate on small elements (borders, chip fills) via Reanimated, never on large surfaces.
 2. **Run animations on the UI thread** with Reanimated shared values and `useAnimatedStyle`. No `setState` per frame, no `Animated` from React Native core for new work.
 3. **Gestures with Gesture Handler** (`Gesture.Pan()`), updates in worklets; touch tracking never goes through the JS thread.
 4. **No continuous background animations.** No looping idle motion on Home, no animated gradients, no particle systems. Spinners only while loading.
@@ -208,4 +210,24 @@ Decided: `expo-haptics` is not installed for now; haptics will be revisited late
 | Welcome finishes in under a second and buttons work immediately.         | A 3-second animated intro the user must watch or skip.                       |
 | Tabs switch instantly.                                                   | Tabs cross-slide on every switch.                                            |
 | Reduced motion: steps crossfade, celebrations are static.                | Reduced motion: everything still bounces, or state changes become invisible. |
-| Progress bar fill animated with `scaleX` on the UI thread.               | `width` animated through `setState` every frame.                             |
+| Progress bar fill animated with a transform on the UI thread.            | `width` animated through `setState` every frame.                             |
+
+---
+
+## 10. Implementation status (end of Phase 4 step 4)
+
+Implemented: motion tokens, `springTo` / `timingTo` / `fadeTo` helpers, press feedback on `Button` (0.97) and pressable `Card` (0.98), `ProgressBar` fill, reduced-motion handling for all of them.
+
+Still to build, in the step that owns them:
+
+| Gap                                                                                                                                               | Planned in                      |
+| ------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------- |
+| Selection card, step progress bar, Pebble and step transitions                                                                                    | Phase 4 steps 5 and 6           |
+| Onboarding completion moment                                                                                                                      | Phase 4 step 6                  |
+| Welcome entrance sequence                                                                                                                         | Phase 4 step 8                  |
+| Auth → app fade (navigation, section 4.D); navigators set no `animation` option yet                                                               | Phase 4 step 7                  |
+| `TextField` error message: fade in with a 4 dp rise (`base`)                                                                                      | Later polish                    |
+| `InlineMessage` appearance animation                                                                                                              | Later polish                    |
+| Password visibility icon crossfade (`fast`)                                                                                                       | Later polish                    |
+| `linear` easing token (only needed for pulses and skeletons)                                                                                      | When skeletons are added        |
+| `usePressFeedback` re-renders on press in and out; `Card` does not need it (no color change), and non-pressable cards still create a shared value | Performance pass before Phase 5 |

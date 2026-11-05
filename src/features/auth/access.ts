@@ -8,12 +8,14 @@ import { type AuthState } from './auth-state';
  */
 export const ONBOARDING_REQUIRED = false;
 
-export type Access = 'loading' | 'signedOut' | 'recovery' | 'onboarding' | 'app';
+export type Access = 'loading' | 'signedOut' | 'recovery' | 'accountError' | 'onboarding' | 'app';
 
 type AccessInput = {
   auth: Pick<AuthState, 'status' | 'isRecovery'>;
-  /** Undefined while the profile is loading or unavailable. */
+  /** The signed-in user's own profile value; undefined while it is loading or unavailable. */
   onboardingCompleted: boolean | undefined;
+  /** The profile could not be loaded (network, missing row) and there is no copy to use. */
+  profileFailed?: boolean;
   onboardingRequired?: boolean;
 };
 
@@ -21,14 +23,15 @@ type AccessInput = {
 export function resolveAccess({
   auth,
   onboardingCompleted,
+  profileFailed = false,
   onboardingRequired = ONBOARDING_REQUIRED,
 }: AccessInput): Access {
   if (auth.status === 'loading') return 'loading';
   if (auth.status === 'signedOut') return 'signedOut';
   if (auth.isRecovery) return 'recovery';
   if (!onboardingRequired) return 'app';
-  if (onboardingCompleted === undefined) return 'loading';
-  return onboardingCompleted ? 'app' : 'onboarding';
+  if (onboardingCompleted !== undefined) return onboardingCompleted ? 'app' : 'onboarding';
+  return profileFailed ? 'accountError' : 'loading';
 }
 
 /** Where a request for an app screen goes when the user may not see the app. */

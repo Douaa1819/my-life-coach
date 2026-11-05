@@ -16,7 +16,7 @@ import { useAuth, useSessionUser } from '@/features/auth/auth-provider';
 import { useZodForm } from '@/lib/forms/use-zod-form';
 import { DataAccessError } from '@/lib/supabase/data-access-error';
 
-import { type Profile, profileUpdateSchema } from './profile.schema';
+import { DISPLAY_NAME_MAX_LENGTH, type Profile, profileUpdateSchema } from './profile.schema';
 import { useProfile, useUpdateProfile } from './use-profile';
 
 function saveErrorMessage(error: unknown) {
@@ -53,7 +53,7 @@ function DisplayNameForm({ profile }: { profile: Profile }) {
         autoComplete="given-name"
         textContentType="givenName"
         autoCapitalize="words"
-        maxLength={50}
+        maxLength={DISPLAY_NAME_MAX_LENGTH}
         returnKeyType="done"
         onSubmitEditing={submit}
       />

@@ -47,6 +47,28 @@ describe('resolveAccess', () => {
       ).toBe('app');
     });
 
+    test('a profile that cannot be loaded shows an account error, not an endless loader', () => {
+      expect(
+        resolveAccess({
+          auth: signedIn,
+          onboardingCompleted: undefined,
+          profileFailed: true,
+          onboardingRequired: true,
+        }),
+      ).toBe('accountError');
+    });
+
+    test('a failed refetch keeps using the profile already loaded', () => {
+      expect(
+        resolveAccess({
+          auth: signedIn,
+          onboardingCompleted: true,
+          profileFailed: true,
+          onboardingRequired: true,
+        }),
+      ).toBe('app');
+    });
+
     test('recovery still takes precedence', () => {
       expect(
         resolveAccess({
@@ -63,6 +85,7 @@ describe('getAppRedirect', () => {
   test.each([
     ['signedOut', '/welcome'],
     ['loading', '/welcome'],
+    ['accountError', '/welcome'],
     ['onboarding', '/onboarding'],
     ['recovery', '/reset-password'],
   ] as const)('redirects %s users to %s', (access, href) => {

@@ -108,14 +108,57 @@ describe('onboardingReducer', () => {
   test('restore replaces step and answers for the owner only', () => {
     const draft = { userId: USER_A, step: 'checkIn' as const, answers: completeAnswers() };
 
-    const restored = run(createInitialState('', USER_A), { type: 'restore', draft });
+    const restored = run(createInitialState('', USER_A, true), {
+      type: 'restore',
+      userId: USER_A,
+      draft,
+    });
     expect(restored.step).toBe('checkIn');
     expect(restored.answers.displayName).toBe('Sara');
     expect(restored.pendingSave).toBe(false);
+    expect(restored.restoring).toBe(false);
 
-    const foreign = run(createInitialState('', USER_B), { type: 'restore', draft });
-    expect(foreign.step).toBe('intro');
-    expect(foreign.answers.displayName).toBe('');
+    const foreignDraft = run(createInitialState('', USER_B, true), {
+      type: 'restore',
+      userId: USER_B,
+      draft,
+    });
+    expect(foreignDraft).toMatchObject({ step: 'intro', restoring: false });
+    expect(foreignDraft.answers.displayName).toBe('');
+  });
+
+  test('user actions are ignored until the draft has been read', () => {
+    const restoring = createInitialState('Sara', USER_A, true);
+    const state = run(
+      restoring,
+      { type: 'next' },
+      { type: 'setText', field: 'displayName', value: 'Typed too early' },
+      { type: 'edit', step: 'goal' },
+    );
+    expect(state).toBe(restoring);
+
+    const ready = run(state, { type: 'restore', userId: USER_A, draft: null });
+    expect(ready).toMatchObject({ step: 'intro', restoring: false });
+    expect(run(ready, { type: 'next' }).step).toBe('name');
+  });
+
+  test('a late restore never replaces answers the user has entered', () => {
+    const draft = { userId: USER_A, step: 'checkIn' as const, answers: completeAnswers() };
+    let state = run(createInitialState('', USER_A, true), {
+      type: 'restore',
+      userId: USER_A,
+      draft: null,
+    });
+    state = run(state, { type: 'next' }, { type: 'setText', field: 'displayName', value: 'Sam' });
+
+    const after = run(state, { type: 'restore', userId: USER_A, draft });
+    expect(after).toBe(state);
+  });
+
+  test('a restore meant for another user does not end restoration', () => {
+    const draft = { userId: USER_A, step: 'checkIn' as const, answers: completeAnswers() };
+    const state = createInitialState('Bob', USER_B, true);
+    expect(run(state, { type: 'restore', userId: USER_A, draft })).toBe(state);
   });
 
   test('a save is pending after moves, not after typing', () => {
@@ -137,7 +180,7 @@ describe('onboardingReducer', () => {
     expect(answered.step).toBe('goal');
 
     const switched = run(answered, { type: 'reset', ownerId: USER_B, displayName: 'Bob' });
-    expect(switched).toEqual(createInitialState('Bob', USER_B));
+    expect(switched).toEqual(createInitialState('Bob', USER_B, true));
   });
 
   test('typed text is clamped to the field limits in code points', () => {

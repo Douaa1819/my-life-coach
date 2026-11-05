@@ -23,6 +23,7 @@ jest.mock('../auth-provider', () => ({
       isRecovery: false,
       notice: null,
       signOutRequested: false,
+      endedSession: null,
     },
   }),
 }));

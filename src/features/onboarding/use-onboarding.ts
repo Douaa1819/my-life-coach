@@ -27,14 +27,14 @@ export function useOnboarding({
 }: UseOnboardingOptions) {
   const queryClient = useQueryClient();
   const [state, dispatch] = useReducer(onboardingReducer, null, (): OnboardingState =>
-    createInitialState(initialName, userId),
+    createInitialState(initialName, userId, true),
   );
-  const [restoredFor, setRestoredFor] = useState<string | null>(null);
   const [completedFor, setCompletedFor] = useState<string | null>(null);
 
   // Until the reset below runs, the state may still hold the previous user's answers.
   const isCurrentUser = state.ownerId === userId;
-  const isRestoring = !isCurrentUser || restoredFor !== userId;
+  /** Editable fields must not be shown while true: the draft is still being read. */
+  const isRestoring = !isCurrentUser || state.restoring;
   const isCompleted = completedFor === userId;
   const canSave = isCurrentUser && !isRestoring && !isCompleted;
 
@@ -46,11 +46,13 @@ export function useOnboarding({
   useEffect(() => {
     let active = true;
     dispatch({ type: 'reset', ownerId: userId, displayName: latest.current.initialName });
-    void draftStore.load(userId).then((draft) => {
-      if (!active) return;
-      if (draft) dispatch({ type: 'restore', draft });
-      setRestoredFor(userId);
-    });
+    // An unreadable draft only means starting over; it must never block the flow.
+    void draftStore
+      .load(userId)
+      .catch(() => null)
+      .then((draft) => {
+        if (active) dispatch({ type: 'restore', userId, draft });
+      });
     return () => {
       active = false;
     };

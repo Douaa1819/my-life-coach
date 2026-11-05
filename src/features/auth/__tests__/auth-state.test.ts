@@ -126,6 +126,73 @@ describe('authReducer', () => {
     expect(state).toMatchObject({ status: 'signedIn', isRecovery: false });
   });
 
+  describe('records which session definitively ended, so its local drafts are deleted', () => {
+    test('an explicit sign-out', () => {
+      let state = authReducer(signedIn('user-a'), { type: 'signOutRequested' });
+      state = authReducer(state, { type: 'authEvent', event: 'SIGNED_OUT', session: null });
+      expect(state.endedSession).toEqual({ userId: 'user-a', reason: 'signOutRequested' });
+    });
+
+    test('a rejected or revoked refresh token', () => {
+      const state = authReducer(signedIn('user-a'), {
+        type: 'authEvent',
+        event: 'SIGNED_OUT',
+        session: null,
+      });
+      expect(state.endedSession).toEqual({ userId: 'user-a', reason: 'sessionRejected' });
+    });
+
+    test('another account signing in', () => {
+      const state = authReducer(signedIn('user-a'), {
+        type: 'authEvent',
+        event: 'SIGNED_IN',
+        session: session('user-b'),
+      });
+      expect(state.endedSession).toEqual({ userId: 'user-a', reason: 'userChanged' });
+    });
+
+    test.each(['TOKEN_REFRESHED', 'USER_UPDATED', 'SIGNED_IN'] as const)(
+      'not a %s event for the same user',
+      (event) => {
+        const state = authReducer(signedIn('user-a'), {
+          type: 'authEvent',
+          event,
+          session: session('user-a'),
+        });
+        expect(state.endedSession).toBeNull();
+      },
+    );
+
+    test('not a session-less event that is not a sign-out', () => {
+      const state = authReducer(signedIn('user-a'), {
+        type: 'authEvent',
+        event: 'INITIAL_SESSION',
+        session: null,
+      });
+      expect(state.endedSession).toBeNull();
+    });
+
+    test('not a start without a stored session, where no user is known', () => {
+      const state = authReducer(initialAuthState, {
+        type: 'authEvent',
+        event: 'SIGNED_OUT',
+        session: null,
+      });
+      expect(state.endedSession).toBeNull();
+    });
+
+    test('keeps the last ended session through later events', () => {
+      let state = authReducer(signedIn('user-a'), {
+        type: 'authEvent',
+        event: 'SIGNED_OUT',
+        session: null,
+      });
+      const ended = state.endedSession;
+      state = authReducer(state, { type: 'authEvent', event: 'SIGNED_IN', session: session('b') });
+      expect(state.endedSession).toBe(ended);
+    });
+  });
+
   test('signing out ends recovery', () => {
     let state = authReducer(initialAuthState, {
       type: 'authEvent',

@@ -33,6 +33,8 @@ export type OnboardingState = {
   navigation: number;
   /** True after a navigation until the draft is saved: drafts save per step, not per keystroke. */
   pendingSave: boolean;
+  /** True until the owner's draft has been read. User actions are ignored meanwhile. */
+  restoring: boolean;
 };
 
 type TextAnswer = keyof typeof textInputLimits;
@@ -45,13 +47,19 @@ export type OnboardingAction =
   | { type: 'back' }
   | { type: 'skip' }
   | { type: 'edit'; step: QuestionStep }
-  | { type: 'restore'; draft: Pick<OnboardingDraft, 'userId' | 'step' | 'answers'> }
+  /** Ends restoration for `userId`, with their draft or null when there is none. */
+  | {
+      type: 'restore';
+      userId: string;
+      draft: Pick<OnboardingDraft, 'userId' | 'step' | 'answers'> | null;
+    }
   | { type: 'saved'; navigation: number }
   | { type: 'reset'; ownerId: string; displayName: string };
 
 export function createInitialState(
   displayName = '',
   ownerId: string | null = null,
+  restoring = false,
 ): OnboardingState {
   return {
     ownerId,
@@ -61,6 +69,7 @@ export function createInitialState(
     notice: null,
     navigation: 0,
     pendingSave: false,
+    restoring,
   };
 }
 
@@ -157,6 +166,8 @@ export function onboardingReducer(
   state: OnboardingState,
   action: OnboardingAction,
 ): OnboardingState {
+  if (state.restoring && action.type !== 'restore' && action.type !== 'reset') return state;
+
   switch (action.type) {
     case 'setText': {
       const value = clampToCodePoints(action.value, textInputLimits[action.field]);
@@ -200,22 +211,27 @@ export function onboardingReducer(
     case 'edit':
       return navigate(state, action.step, true);
 
-    case 'restore':
-      if (action.draft.userId !== state.ownerId) return state;
+    case 'restore': {
+      // Once restoration is over, answers belong to the user: a late draft never replaces them.
+      if (!state.restoring || action.userId !== state.ownerId) return state;
+      const { draft } = action;
+      if (!draft || draft.userId !== state.ownerId) return { ...state, restoring: false };
       return {
         ...state,
-        step: action.draft.step,
-        answers: withValidCategory(action.draft.answers),
+        step: draft.step,
+        answers: withValidCategory(draft.answers),
         returnToReview: false,
         notice: null,
         pendingSave: false,
+        restoring: false,
       };
+    }
 
     case 'saved':
       return action.navigation === state.navigation ? { ...state, pendingSave: false } : state;
 
     case 'reset':
       if (action.ownerId === state.ownerId) return state;
-      return createInitialState(action.displayName, action.ownerId);
+      return createInitialState(action.displayName, action.ownerId, true);
   }
 }

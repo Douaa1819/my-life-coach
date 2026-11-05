@@ -126,18 +126,14 @@ describe('useOnboarding', () => {
 
   test('success clears the draft, stops saving and lets finish open Home', async () => {
     mockRpc.mockResolvedValue({ data: null, error: null });
-    const { items, save, queryClient, render } = setup();
+    const { items, draftStore, save, queryClient, render } = setup();
     const key = profileQueryKeys.detail(USER_A);
     queryClient.setQueryData(key, { id: USER_A, onboardingCompleted: false });
+    await draftStore.save(USER_A, 'review', completeAnswers());
 
     const { result } = await render();
     await ready(result);
-    await act(async () => {
-      result.current.dispatch({
-        type: 'restore',
-        draft: { userId: USER_A, step: 'review', answers: completeAnswers() },
-      });
-    });
+    expect(result.current.state.step).toBe('review');
 
     await act(async () => {
       result.current.submitAnswers();
@@ -163,15 +159,10 @@ describe('useOnboarding', () => {
       data: null,
       error: { code: '22023', message: 'invalid_goal_title' },
     });
-    const { render } = setup();
+    const { draftStore, render } = setup();
+    await draftStore.save(USER_A, 'review', completeAnswers());
     const { result } = await render();
     await ready(result);
-    await act(async () => {
-      result.current.dispatch({
-        type: 'restore',
-        draft: { userId: USER_A, step: 'review', answers: completeAnswers() },
-      });
-    });
 
     await act(async () => {
       result.current.submitAnswers();
@@ -180,5 +171,65 @@ describe('useOnboarding', () => {
     await waitFor(() => expect(result.current.state.step).toBe('goal'));
     expect(result.current.state.returnToReview).toBe(true);
     expect(result.current.isCompleted).toBe(false);
+  });
+
+  test('stays restoring and ignores input until the draft is read', async () => {
+    const { draftStore, render } = setup();
+    await draftStore.save(USER_A, 'goal', completeAnswers());
+    let finishLoad: () => void = () => undefined;
+    const load = draftStore.load.bind(draftStore);
+    jest.spyOn(draftStore, 'load').mockImplementationOnce(
+      (userId) =>
+        new Promise((resolve) => {
+          finishLoad = () => resolve(load(userId));
+        }),
+    );
+
+    const { result } = await render();
+    expect(result.current.isRestoring).toBe(true);
+    await act(async () => {
+      result.current.dispatch({ type: 'setText', field: 'displayName', value: 'Too early' });
+    });
+    expect(result.current.state.answers.displayName).not.toBe('Too early');
+
+    await act(async () => finishLoad());
+    await ready(result);
+    expect(result.current.state.step).toBe('goal');
+    expect(result.current.state.answers.displayName).toBe('Sara');
+  });
+
+  test('an unreadable draft lets the user start over instead of blocking', async () => {
+    const { draftStore, render } = setup();
+    jest.spyOn(draftStore, 'load').mockRejectedValueOnce(new Error('keystore unavailable'));
+
+    const { result } = await render();
+    await ready(result);
+    expect(result.current.state.step).toBe('intro');
+    await act(async () => {
+      result.current.dispatch({ type: 'next' });
+    });
+    expect(result.current.state.step).toBe('name');
+  });
+
+  test("a slow restore for the previous user never lands in the next user's flow", async () => {
+    const { draftStore, render } = setup();
+    await draftStore.save(USER_A, 'checkIn', completeAnswers());
+    let finishLoadA: () => void = () => undefined;
+    const load = draftStore.load.bind(draftStore);
+    jest.spyOn(draftStore, 'load').mockImplementationOnce(
+      (userId) =>
+        new Promise((resolve) => {
+          finishLoadA = () => resolve(load(userId));
+        }),
+    );
+
+    const { result, rerender } = await render(USER_A);
+    await rerender({ userId: USER_B });
+    await ready(result);
+    await act(async () => finishLoadA());
+
+    expect(result.current.state.ownerId).toBe(USER_B);
+    expect(result.current.state.step).toBe('intro');
+    expect(result.current.state.answers.goalTitle).toBe('');
   });
 });

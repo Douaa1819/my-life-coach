@@ -5,6 +5,7 @@ import { StyleSheet, View } from 'react-native';
 import { LoadingState } from '@/components/ui';
 import { typography, useTheme } from '@/design';
 import { getAppRedirect } from '@/features/auth/access';
+import { AccountError } from '@/features/auth/components/account-error';
 import { useAccess } from '@/features/auth/use-access';
 
 import { rootHref } from './tab-routes';
@@ -21,6 +22,8 @@ export function RootNavigator() {
   const access = useAccess();
   const isLoading = access === 'loading';
   const [splashTimedOut, setSplashTimedOut] = useState(false);
+  const showLoader = isLoading && splashTimedOut;
+  const isCovered = showLoader || access === 'accountError';
 
   useEffect(() => {
     if (!isLoading) {
@@ -36,40 +39,53 @@ export function RootNavigator() {
 
   return (
     <>
-      <Stack
-        screenOptions={{
-          headerShadowVisible: false,
-          headerStyle: { backgroundColor: colors.background },
-          headerTintColor: colors.text,
-          headerTitleStyle: { fontWeight: typography.headline.fontWeight },
-          contentStyle: { backgroundColor: colors.background },
-        }}>
-        <Stack.Protected guard={access === 'app'} redirectTo={getAppRedirect(access)}>
-          <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-          <Stack.Screen name="missions" options={{ title: "Today's missions" }} />
-          <Stack.Screen name="progress" options={{ title: 'Progress' }} />
-        </Stack.Protected>
-        <Stack.Protected guard={access === 'onboarding'} redirectTo={rootHref}>
-          <Stack.Screen name="onboarding" options={{ headerShown: false }} />
-        </Stack.Protected>
-        <Stack.Protected
-          guard={access === 'signedOut' || access === 'loading'}
-          redirectTo={rootHref}>
-          <Stack.Screen name="(auth)" options={{ headerShown: false }} />
-        </Stack.Protected>
-        {/* Email links land here whatever the session state. */}
-        <Stack.Screen
-          name="reset-password"
-          options={{ headerShown: false, gestureEnabled: false }}
-        />
-        <Stack.Screen name="verify-email" options={{ headerShown: false }} />
-        <Stack.Screen name="+not-found" options={{ title: 'Not found' }} />
-      </Stack>
-      {isLoading && splashTimedOut && (
+      {/* Screens under a full-screen overlay stay out of reach of screen readers. */}
+      <View
+        style={styles.navigator}
+        importantForAccessibility={isCovered ? 'no-hide-descendants' : 'auto'}
+        aria-hidden={isCovered}>
+        <Stack
+          screenOptions={{
+            headerShadowVisible: false,
+            headerStyle: { backgroundColor: colors.background },
+            headerTintColor: colors.text,
+            headerTitleStyle: { fontWeight: typography.headline.fontWeight },
+            contentStyle: { backgroundColor: colors.background },
+          }}>
+          <Stack.Protected guard={access === 'app'} redirectTo={getAppRedirect(access)}>
+            <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+            <Stack.Screen name="missions" options={{ title: "Today's missions" }} />
+            <Stack.Screen name="progress" options={{ title: 'Progress' }} />
+          </Stack.Protected>
+          <Stack.Protected guard={access === 'onboarding'} redirectTo={rootHref}>
+            <Stack.Screen name="onboarding" options={{ headerShown: false }} />
+          </Stack.Protected>
+          <Stack.Protected
+            guard={access === 'signedOut' || access === 'loading' || access === 'accountError'}
+            redirectTo={rootHref}>
+            <Stack.Screen name="(auth)" options={{ headerShown: false }} />
+          </Stack.Protected>
+          {/* Email links land here whatever the session state. */}
+          <Stack.Screen
+            name="reset-password"
+            options={{ headerShown: false, gestureEnabled: false }}
+          />
+          <Stack.Screen name="verify-email" options={{ headerShown: false }} />
+          <Stack.Screen name="+not-found" options={{ title: 'Not found' }} />
+        </Stack>
+      </View>
+      {showLoader && (
         <View style={[StyleSheet.absoluteFill, { backgroundColor: colors.background }]}>
           <LoadingState label="Restoring your session" />
         </View>
       )}
+      {access === 'accountError' && <AccountError />}
     </>
   );
 }
+
+const styles = StyleSheet.create({
+  navigator: {
+    flex: 1,
+  },
+});

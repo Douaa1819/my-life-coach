@@ -142,9 +142,15 @@ export function createInitialAnswers(displayName = ''): OnboardingAnswers {
 }
 
 // Text rules match private.is_clean_text: Postgres counts code points, not UTF-16 units.
-const codePointLength = (value: string) => Array.from(value).length;
+/** Use for any visible character counter, so it agrees with the server. */
+export const codePointLength = (value: string) => Array.from(value).length;
 
-/** Longest text each field accepts while typing, in code points. */
+/**
+ * Longest text each field accepts, in code points. Pass these as TextInput
+ * `maxLength` too: it counts UTF-16 units, so it can only be stricter (emoji
+ * count twice) and never lets through more than the server accepts. The
+ * reducer clamps in code points, which also covers pasted text.
+ */
 export const textInputLimits = {
   displayName: DISPLAY_NAME_MAX_LENGTH,
   goalTitle: GOAL_TITLE_MAX_LENGTH,
