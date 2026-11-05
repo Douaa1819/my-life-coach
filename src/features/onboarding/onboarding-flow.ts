@@ -15,21 +15,27 @@ import {
   onboardingSteps,
   type QuestionStep,
   questionSteps,
+  clampToCodePoints,
+  textInputLimits,
 } from './onboarding.schema';
 
 export type OnboardingNotice = 'maxFocusAreas' | null;
 
 export type OnboardingState = {
+  /** The user these answers belong to. They are never saved or shown for anyone else. */
+  ownerId: string | null;
   step: OnboardingStep;
   answers: OnboardingAnswers;
   /** Set by Edit on Review: Continue and Back return to Review. */
   returnToReview: boolean;
   notice: OnboardingNotice;
-  /** Increments on every navigation, so the draft is saved per step, not per keystroke. */
+  /** Increments on every navigation. */
   navigation: number;
+  /** True after a navigation until the draft is saved: drafts save per step, not per keystroke. */
+  pendingSave: boolean;
 };
 
-type TextAnswer = 'displayName' | 'goalTitle' | 'motivation';
+type TextAnswer = keyof typeof textInputLimits;
 
 export type OnboardingAction =
   | { type: 'setText'; field: TextAnswer; value: string }
@@ -39,15 +45,22 @@ export type OnboardingAction =
   | { type: 'back' }
   | { type: 'skip' }
   | { type: 'edit'; step: QuestionStep }
-  | { type: 'restore'; draft: Pick<OnboardingDraft, 'step' | 'answers'> };
+  | { type: 'restore'; draft: Pick<OnboardingDraft, 'userId' | 'step' | 'answers'> }
+  | { type: 'saved'; navigation: number }
+  | { type: 'reset'; ownerId: string; displayName: string };
 
-export function createInitialState(displayName = ''): OnboardingState {
+export function createInitialState(
+  displayName = '',
+  ownerId: string | null = null,
+): OnboardingState {
   return {
+    ownerId,
     step: 'intro',
     answers: createInitialAnswers(displayName),
     returnToReview: false,
     notice: null,
     navigation: 0,
+    pendingSave: false,
   };
 }
 
@@ -124,7 +137,14 @@ function stepBefore(step: OnboardingStep): OnboardingStep {
 }
 
 function navigate(state: OnboardingState, step: OnboardingStep, returnToReview = false) {
-  return { ...state, step, returnToReview, notice: null, navigation: state.navigation + 1 };
+  return {
+    ...state,
+    step,
+    returnToReview,
+    notice: null,
+    navigation: state.navigation + 1,
+    pendingSave: true,
+  };
 }
 
 /** Keeps the goal category among the chosen areas, defaulting to the first one. */
@@ -138,8 +158,10 @@ export function onboardingReducer(
   action: OnboardingAction,
 ): OnboardingState {
   switch (action.type) {
-    case 'setText':
-      return { ...state, answers: { ...state.answers, [action.field]: action.value } };
+    case 'setText': {
+      const value = clampToCodePoints(action.value, textInputLimits[action.field]);
+      return { ...state, answers: { ...state.answers, [action.field]: value } };
+    }
 
     case 'toggleFocusArea': {
       const { focusAreas } = state.answers;
@@ -179,12 +201,21 @@ export function onboardingReducer(
       return navigate(state, action.step, true);
 
     case 'restore':
+      if (action.draft.userId !== state.ownerId) return state;
       return {
         ...state,
         step: action.draft.step,
         answers: withValidCategory(action.draft.answers),
         returnToReview: false,
         notice: null,
+        pendingSave: false,
       };
+
+    case 'saved':
+      return action.navigation === state.navigation ? { ...state, pendingSave: false } : state;
+
+    case 'reset':
+      if (action.ownerId === state.ownerId) return state;
+      return createInitialState(action.displayName, action.ownerId);
   }
 }

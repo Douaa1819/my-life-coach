@@ -5,10 +5,11 @@ import { type Tables } from '@/lib/supabase/database.types';
 /** Mirrors the profiles_display_name_* constraints. The database is the authority. */
 export const DISPLAY_NAME_MAX_LENGTH = 50;
 
+/** Postgres [[:cntrl:]] in the UTF-8 locale also matches the C1 range U+0080–U+009F. */
 function hasControlCharacters(value: string) {
   for (const character of value) {
     const code = character.codePointAt(0) ?? 0;
-    if (code < 0x20 || code === 0x7f) return true;
+    if (code < 0x20 || (code >= 0x7f && code <= 0x9f)) return true;
   }
   return false;
 }

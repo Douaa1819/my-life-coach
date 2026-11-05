@@ -8,7 +8,7 @@ import {
   questionNumber,
 } from '../onboarding-flow';
 import { type OnboardingAnswers, type OnboardingStep } from '../onboarding.schema';
-import { completeAnswers } from './onboarding-fixtures';
+import { completeAnswers, USER_A, USER_B } from './onboarding-fixtures';
 
 function run(state: OnboardingState, ...actions: OnboardingAction[]) {
   return actions.reduce(onboardingReducer, state);
@@ -105,21 +105,51 @@ describe('onboardingReducer', () => {
     expect(run(edited, { type: 'next' }).returnToReview).toBe(false);
   });
 
-  test('restore replaces step and answers', () => {
-    const state = run(createInitialState(''), {
-      type: 'restore',
-      draft: { step: 'checkIn', answers: completeAnswers() },
-    });
-    expect(state.step).toBe('checkIn');
-    expect(state.answers.displayName).toBe('Sara');
+  test('restore replaces step and answers for the owner only', () => {
+    const draft = { userId: USER_A, step: 'checkIn' as const, answers: completeAnswers() };
+
+    const restored = run(createInitialState('', USER_A), { type: 'restore', draft });
+    expect(restored.step).toBe('checkIn');
+    expect(restored.answers.displayName).toBe('Sara');
+    expect(restored.pendingSave).toBe(false);
+
+    const foreign = run(createInitialState('', USER_B), { type: 'restore', draft });
+    expect(foreign.step).toBe('intro');
+    expect(foreign.answers.displayName).toBe('');
   });
 
-  test('navigation increments on moves, not on typing', () => {
-    let state = createInitialState('Sara');
+  test('a save is pending after moves, not after typing', () => {
+    let state = createInitialState('Sara', USER_A);
     state = run(state, { type: 'setText', field: 'displayName', value: 'Sam' });
-    expect(state.navigation).toBe(0);
+    expect(state.pendingSave).toBe(false);
+
     state = run(state, { type: 'next' });
-    expect(state.navigation).toBe(1);
+    expect(state.pendingSave).toBe(true);
+    expect(run(state, { type: 'saved', navigation: state.navigation }).pendingSave).toBe(false);
+    expect(run(state, { type: 'saved', navigation: state.navigation - 1 }).pendingSave).toBe(true);
+  });
+
+  test('reset starts over for a different user and ignores the same user', () => {
+    const answered = run(
+      { ...createInitialState('Sara', USER_A), answers: completeAnswers(), step: 'goal' },
+      { type: 'reset', ownerId: USER_A, displayName: 'X' },
+    );
+    expect(answered.step).toBe('goal');
+
+    const switched = run(answered, { type: 'reset', ownerId: USER_B, displayName: 'Bob' });
+    expect(switched).toEqual(createInitialState('Bob', USER_B));
+  });
+
+  test('typed text is clamped to the field limits in code points', () => {
+    const state = run(
+      createInitialState('', USER_A),
+      { type: 'setText', field: 'displayName', value: 'a'.repeat(60) },
+      { type: 'setText', field: 'goalTitle', value: '🏃'.repeat(130) },
+      { type: 'setText', field: 'motivation', value: 'b'.repeat(2000) },
+    );
+    expect(state.answers.displayName).toHaveLength(50);
+    expect(Array.from(state.answers.goalTitle)).toHaveLength(120);
+    expect(state.answers.motivation).toHaveLength(280);
   });
 });
 

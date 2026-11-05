@@ -82,6 +82,26 @@ describe('onboarding draft store', () => {
     expect(items.size).toBe(0);
   });
 
+  test('a save arriving after a clear does not bring the draft back', async () => {
+    const { draftStore, items } = setup();
+    await draftStore.save(USER_A, 'goal', completeAnswers());
+    await draftStore.clear(USER_A);
+
+    await draftStore.save(USER_A, 'horizon', completeAnswers());
+    expect(items.size).toBe(0);
+  });
+
+  test('the next load reopens saving for that user, and other users are unaffected', async () => {
+    const { draftStore } = setup();
+    await draftStore.clear(USER_A);
+    await draftStore.save(USER_B, 'goal', completeAnswers());
+    await expect(draftStore.load(USER_B)).resolves.not.toBeNull();
+
+    await draftStore.load(USER_A);
+    await draftStore.save(USER_A, 'goal', completeAnswers());
+    await expect(draftStore.load(USER_A)).resolves.toMatchObject({ step: 'goal' });
+  });
+
   test('storage failures are swallowed', async () => {
     const failing: KeyValueStore = {
       getItemAsync: () => Promise.reject(new Error('keystore unavailable')),

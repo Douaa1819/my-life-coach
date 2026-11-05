@@ -1,7 +1,7 @@
 import { z } from 'zod';
 
 import { goalHorizons, type GoalHorizon } from '@/features/goals/goal.schema';
-import { displayNameSchema } from '@/features/profile/profile.schema';
+import { DISPLAY_NAME_MAX_LENGTH, displayNameSchema } from '@/features/profile/profile.schema';
 
 /** Mirrors the allowed values in the onboarding migration. The database is the authority. */
 export const focusAreas = [
@@ -144,6 +144,18 @@ export function createInitialAnswers(displayName = ''): OnboardingAnswers {
 // Text rules match private.is_clean_text: Postgres counts code points, not UTF-16 units.
 const codePointLength = (value: string) => Array.from(value).length;
 
+/** Longest text each field accepts while typing, in code points. */
+export const textInputLimits = {
+  displayName: DISPLAY_NAME_MAX_LENGTH,
+  goalTitle: GOAL_TITLE_MAX_LENGTH,
+  motivation: MOTIVATION_MAX_LENGTH,
+} as const;
+
+export function clampToCodePoints(value: string, limit: number) {
+  const characters = Array.from(value);
+  return characters.length > limit ? characters.slice(0, limit).join('') : value;
+}
+
 function hasControlCharacters(value: string, allowNewlines: boolean) {
   for (const character of value) {
     if (allowNewlines && character === '\n') continue;
@@ -225,7 +237,9 @@ export const answerSteps: Record<keyof OnboardingAnswers, QuestionStep> = {
 };
 
 // Drafts are read from device storage, so every field is bounded and re-checked.
-// Text stays lenient (an unfinished answer is allowed) but size-limited.
+// Text stays lenient (an unfinished answer is allowed) but size-limited. Input is
+// clamped to textInputLimits in code points (at most 2 UTF-16 units each), so a
+// draft the app wrote always fits these bounds.
 const draftAnswersSchema = z.object({
   displayName: z.string().max(200),
   focusAreas: z.array(z.enum(focusAreas)).max(MAX_FOCUS_AREAS),

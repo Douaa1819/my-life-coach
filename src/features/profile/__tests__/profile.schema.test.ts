@@ -37,6 +37,7 @@ describe('displayNameSchema', () => {
     ['too long', 'a'.repeat(51)],
     ['a line break', 'Sa\nra'],
     ['a control character', 'Sa\u0007ra'],
+    ['a C1 control character', 'Sa\u0085ra'],
   ])('rejects a name that is %s', (_case, value) => {
     expect(displayNameSchema.safeParse(value).success).toBe(false);
   });
