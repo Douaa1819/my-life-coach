@@ -17,11 +17,14 @@ export function getAuthRedirectUrl(path: AuthRedirectPath) {
 export type AuthLink =
   | { kind: 'code'; code: string }
   | { kind: 'tokenHash'; tokenHash: string; type: EmailOtpType }
+  | { kind: 'implicit'; accessToken: string; refreshToken: string }
   | { kind: 'error'; errorCode: string | null }
   | { kind: 'none' };
 
 const acceptedOtpTypes = new Set<EmailOtpType>(['signup', 'email', 'recovery']);
 const tokenPattern = /^[\w-]{6,512}$/;
+const jwtPattern = /^eyJ[\w-]+\.[\w-]+\.[\w-]+$/;
+const refreshTokenPattern = /^[\w.-]{8,2048}$/;
 
 type Params = Record<string, string>;
 
@@ -64,6 +67,20 @@ export function toAuthLink(params: Params): AuthLink {
   if (tokenHash !== undefined) {
     return tokenPattern.test(tokenHash) && type && acceptedOtpTypes.has(type)
       ? { kind: 'tokenHash', tokenHash, type }
+      : { kind: 'error', errorCode: null };
+  }
+
+  // Hosted recovery emails land with tokens in the hash when PKCE is not used.
+  const accessToken = params.access_token;
+  const refreshToken = params.refresh_token;
+  if (accessToken !== undefined || refreshToken !== undefined) {
+    return accessToken &&
+      refreshToken &&
+      jwtPattern.test(accessToken) &&
+      refreshTokenPattern.test(refreshToken) &&
+      type &&
+      acceptedOtpTypes.has(type)
+      ? { kind: 'implicit', accessToken, refreshToken }
       : { kind: 'error', errorCode: null };
   }
 

@@ -63,4 +63,30 @@ describe('toAuthLink', () => {
   test('is none when the route was opened without a link', () => {
     expect(toAuthLink({})).toEqual({ kind: 'none' });
   });
+
+  test('recognizes implicit recovery tokens from the URL hash', () => {
+    const accessToken = `eyJhbGciOiJIUzI1NiJ9.${'a'.repeat(40)}.${'b'.repeat(40)}`;
+    expect(
+      toAuthLink({
+        access_token: accessToken,
+        refresh_token: 'refresh-token-value',
+        type: 'recovery',
+      }),
+    ).toEqual({
+      kind: 'implicit',
+      accessToken,
+      refreshToken: 'refresh-token-value',
+    });
+  });
+
+  test('rejects implicit tokens that are not a recovery or signup session', () => {
+    const accessToken = `eyJhbGciOiJIUzI1NiJ9.${'a'.repeat(40)}.${'b'.repeat(40)}`;
+    expect(
+      toAuthLink({
+        access_token: accessToken,
+        refresh_token: 'refresh-token-value',
+        type: 'phone_change',
+      }).kind,
+    ).toBe('error');
+  });
 });

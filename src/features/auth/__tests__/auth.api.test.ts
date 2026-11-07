@@ -1,12 +1,19 @@
 import { AuthApiError, AuthRetryableFetchError } from '@supabase/supabase-js';
 
-import { requestPasswordReset, resendVerificationEmail, signOut, signUp } from '../auth.api';
+import {
+  completeAuthLink,
+  requestPasswordReset,
+  resendVerificationEmail,
+  signOut,
+  signUp,
+} from '../auth.api';
 
 const mockAuth = {
   signUp: jest.fn(),
   resend: jest.fn(),
   resetPasswordForEmail: jest.fn(),
   signOut: jest.fn(),
+  setSession: jest.fn(),
 };
 
 jest.mock('@/lib/supabase/client', () => ({
@@ -94,5 +101,22 @@ describe('signOut', () => {
     mockAuth.signOut.mockResolvedValue({ error: null });
     await signOut();
     expect(mockAuth.signOut).toHaveBeenCalledWith({ scope: 'local' });
+  });
+});
+
+describe('completeAuthLink', () => {
+  beforeEach(() => jest.clearAllMocks());
+
+  test('stores a recovery session from implicit hash tokens', async () => {
+    mockAuth.setSession.mockResolvedValue({ data: {}, error: null });
+    await completeAuthLink({
+      kind: 'implicit',
+      accessToken: 'access-token',
+      refreshToken: 'refresh-token',
+    });
+    expect(mockAuth.setSession).toHaveBeenCalledWith({
+      access_token: 'access-token',
+      refresh_token: 'refresh-token',
+    });
   });
 });

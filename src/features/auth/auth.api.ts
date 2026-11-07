@@ -75,13 +75,27 @@ export async function signOut() {
 
 const pendingLinks = new Map<string, Promise<void>>();
 
+function linkKey(link: Exclude<AuthLink, { kind: 'none' } | { kind: 'error' }>) {
+  if (link.kind === 'code') return link.code;
+  if (link.kind === 'tokenHash') return link.tokenHash;
+  return link.accessToken;
+}
+
 async function exchange(link: Exclude<AuthLink, { kind: 'none' } | { kind: 'error' }>) {
   const auth = getSupabaseClient().auth;
   const { error } =
     link.kind === 'code'
       ? await auth.exchangeCodeForSession(link.code)
-      : await auth.verifyOtp({ token_hash: link.tokenHash, type: link.type });
+      : link.kind === 'tokenHash'
+        ? await auth.verifyOtp({ token_hash: link.tokenHash, type: link.type })
+        : await auth.setSession({
+            access_token: link.accessToken,
+            refresh_token: link.refreshToken,
+          });
   if (error) throw error;
+  if (link.kind === 'implicit' && typeof window !== 'undefined' && window.location.hash) {
+    window.history.replaceState(null, '', window.location.pathname + window.location.search);
+  }
 }
 
 /**
@@ -89,7 +103,7 @@ async function exchange(link: Exclude<AuthLink, { kind: 'none' } | { kind: 'erro
  * repeated calls for the same link (re-renders, strict mode) share one request.
  */
 export function completeAuthLink(link: Exclude<AuthLink, { kind: 'none' } | { kind: 'error' }>) {
-  const key = link.kind === 'code' ? link.code : link.tokenHash;
+  const key = linkKey(link);
   const existing = pendingLinks.get(key);
   if (existing) return existing;
   const request = exchange(link);

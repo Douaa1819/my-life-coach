@@ -35,10 +35,16 @@ export function useAuthLink(path: AuthRedirectPath): AuthLink {
 export function useAuthLinkExchange(link: AuthLink): AuthLinkStatus {
   const [result, setResult] = useState<AuthLinkStatus | null>(null);
   const linkKey =
-    link.kind === 'code' ? link.code : link.kind === 'tokenHash' ? link.tokenHash : null;
+    link.kind === 'code'
+      ? link.code
+      : link.kind === 'tokenHash'
+        ? link.tokenHash
+        : link.kind === 'implicit'
+          ? link.accessToken
+          : null;
 
   useEffect(() => {
-    if (link.kind !== 'code' && link.kind !== 'tokenHash') return;
+    if (link.kind !== 'code' && link.kind !== 'tokenHash' && link.kind !== 'implicit') return;
     let isCurrent = true;
     completeAuthLink(link).then(
       () => isCurrent && setResult({ status: 'success' }),
