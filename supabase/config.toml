@@ -162,7 +162,12 @@ site_url = "aicoach://"
 # external_url = ""
 # URLs that auth emails are permitted to redirect to. `exp://**` (Expo Go) and localhost (web
 # dev server) are for local development only; production keeps just the app scheme.
-additional_redirect_urls = ["aicoach://**", "exp://**", "http://localhost:8082/**"]
+additional_redirect_urls = [
+  "aicoach://**",
+  "exp://**",
+  "http://localhost:8081/**",
+  "http://127.0.0.1:8081/**",
+]
 # How long tokens are valid for, in seconds. Defaults to 3600 (1 hour), maximum 604,800 (1 week).
 jwt_expiry = 3600
 # JWT issuer URL. If not set, defaults to auth.external_url.
@@ -253,6 +258,18 @@ content_path = "./supabase/templates/confirmation.html"
 [auth.email.template.recovery]
 subject = "Reset your AI Coach password"
 content_path = "./supabase/templates/recovery.html"
+
+[auth.email.template.magic_link]
+subject = "Your AI Coach sign-in link"
+content_path = "./supabase/templates/magic-link.html"
+
+[auth.email.template.email_change]
+subject = "Confirm your new email for AI Coach"
+content_path = "./supabase/templates/email-change.html"
+
+[auth.email.template.reauthentication]
+subject = "Confirm it's you — AI Coach"
+content_path = "./supabase/templates/reauthentication.html"
 
 # Uncomment to customize email template
 # [auth.email.template.invite]

@@ -26,6 +26,13 @@ export const iconMap = {
   verified: { ios: 'checkmark.seal', android: 'verified' },
   key: { ios: 'key', android: 'key' },
   info: { ios: 'info.circle', android: 'info' },
+  chevronLeft: { ios: 'chevron.left', android: 'chevron_left' },
+  health: { ios: 'heart.fill', android: 'favorite' },
+  career: { ios: 'briefcase.fill', android: 'work' },
+  learning: { ios: 'book.fill', android: 'menu_book' },
+  finance: { ios: 'banknote.fill', android: 'payments' },
+  relationships: { ios: 'person.2.fill', android: 'group' },
+  personal: { ios: 'leaf.fill', android: 'spa' },
 } as const satisfies Record<string, { ios: SFSymbol; android: AndroidSymbol }>;
 
 export type IconName = keyof typeof iconMap;

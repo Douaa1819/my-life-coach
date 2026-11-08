@@ -93,7 +93,7 @@ async function exchange(link: Exclude<AuthLink, { kind: 'none' } | { kind: 'erro
             refresh_token: link.refreshToken,
           });
   if (error) throw error;
-  if (link.kind === 'implicit' && typeof window !== 'undefined' && window.location.hash) {
+  if (link.kind === 'implicit' && typeof window !== 'undefined' && window.location?.hash) {
     window.history.replaceState(null, '', window.location.pathname + window.location.search);
   }
 }

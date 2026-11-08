@@ -2,6 +2,7 @@ import {
   canContinue,
   createInitialState,
   firstInvalidStep,
+  hardwareBackAction,
   type OnboardingAction,
   onboardingReducer,
   type OnboardingState,
@@ -209,6 +210,15 @@ describe('canContinue', () => {
   ])('%s explains why it is disabled', (step, override, reason) => {
     expect(canContinue(step, { ...answers, ...override })).toEqual({ ok: false, reason });
     expect(canContinue(step, answers)).toEqual({ ok: true });
+  });
+});
+
+describe('hardwareBackAction', () => {
+  test('Intro leaves the app, questions step back, completion stays', () => {
+    expect(hardwareBackAction('intro', false)).toBe('exit');
+    expect(hardwareBackAction('name', false)).toBe('back');
+    expect(hardwareBackAction('review', false)).toBe('back');
+    expect(hardwareBackAction('name', true)).toBe('ignore');
   });
 });
 

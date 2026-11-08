@@ -63,6 +63,14 @@ describe('signUp', () => {
 describe('enumeration-safe requests', () => {
   beforeEach(() => jest.clearAllMocks());
 
+  test('password reset emails open the app scheme, not localhost', async () => {
+    mockAuth.resetPasswordForEmail.mockResolvedValue({ data: {}, error: null });
+    await requestPasswordReset({ email: 'sara@example.com' });
+    expect(mockAuth.resetPasswordForEmail).toHaveBeenCalledWith('sara@example.com', {
+      redirectTo: 'aicoach://reset-password',
+    });
+  });
+
   test('a reset request hides account-specific errors', async () => {
     mockAuth.resetPasswordForEmail.mockResolvedValue({
       data: {},

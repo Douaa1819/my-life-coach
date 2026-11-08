@@ -1,4 +1,16 @@
-import { parseAuthUrl, toAuthLink } from '../auth-links';
+import { getAuthRedirectUrl, parseAuthUrl, toAuthLink } from '../auth-links';
+
+jest.mock('expo-linking', () => ({
+  createURL: (path: string) => `aicoach://${path}`,
+}));
+
+describe('getAuthRedirectUrl', () => {
+  test('password reset deep links use the app scheme, not localhost', () => {
+    expect(getAuthRedirectUrl('reset-password')).toBe('aicoach://reset-password');
+    expect(getAuthRedirectUrl('reset-password')).not.toContain('localhost');
+    expect(getAuthRedirectUrl('verify-email')).toBe('aicoach://verify-email');
+  });
+});
 
 describe('parseAuthUrl', () => {
   test('reads query parameters', () => {

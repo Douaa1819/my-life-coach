@@ -129,6 +129,16 @@ export function firstInvalidStep(answers: OnboardingAnswers): QuestionStep | nul
   return questionSteps.find((step) => steps.includes(step)) ?? null;
 }
 
+/** Android hardware back: Intro leaves the app; Completion swallows back; otherwise step back. */
+export function hardwareBackAction(
+  step: OnboardingStep,
+  isCompleted: boolean,
+): 'exit' | 'ignore' | 'back' {
+  if (isCompleted) return 'ignore';
+  if (step === 'intro') return 'exit';
+  return 'back';
+}
+
 /** 1-based position among the eight questions, or null outside them. */
 export function questionNumber(step: OnboardingStep): number | null {
   const index = questionSteps.indexOf(step as QuestionStep);
