@@ -49,6 +49,13 @@ Repeat 1–3 as user B against A.
 | 20  | While signed out, open `aicoach://` deep links to `/missions`, `/progress`, `/(tabs)/profile`                                        | Redirected to Welcome                                         |
 | 21  | Password reset link, then press "Cancel and sign out"                                                                                | Signed out; old password still works                          |
 | 22  | `adb logcat` during sign-up, sign-in and reset                                                                                       | No password, access token or refresh token in the log         |
+| 23  | Incomplete onboarding: open Home / Goals / Profile                                                                                   | Stays on `/onboarding`; tabs are not reachable                |
+| 24  | Complete onboarding, kill the app, sign in again                                                                                     | Home, not the questionnaire                                   |
+| 25  | Network error on "Build my first day"                                                                                                | Answers kept; Try again; a retry after success is idempotent  |
+| 26  | Sign out mid-onboarding, sign in as B                                                                                                | B does not see A's draft (web: drafts are memory-only anyway) |
+| 27  | PATCH `user_preferences` or `POST` `goals` as A                                                                                      | `42501`; only `rpc/complete_onboarding` writes                |
+
+Local Mailpit at http://127.0.0.1:54324 is **not** a hosted inbox. Hosted confirmation and reset must be tested with a real mailbox after SMTP is configured.
 
 ## Bundle check
 

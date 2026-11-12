@@ -2,7 +2,7 @@
 
 Motion is part of the AI Coach identity: it should feel **soft, responsive and alive**, like Pebble taking a small step. It exists to explain what happened (cause and effect), to reward progress, and to keep the user oriented. It never delays the user.
 
-This is a specification; nothing here is implemented yet. It relies only on libraries already installed: `react-native-reanimated` 4.7 (with `react-native-worklets`), `react-native-gesture-handler` 3.3, React Native `Pressable` with Android ripple, and the native stack transitions of Expo Router. **No new dependency is required.** Haptics would need `expo-haptics`, which is not installed; see section 8.
+**Status: motion tokens and reduced-motion helpers are in `src/design/motion.ts` and used by Welcome, onboarding and shared controls.** This file remains the approved guideline. It relies only on libraries already installed: `react-native-reanimated` 4.7 (with `react-native-worklets`), `react-native-gesture-handler` 3.3, React Native `Pressable` with Android ripple, and the native stack transitions of Expo Router. **No new dependency is required.** Haptics would need `expo-haptics`, which is not installed; see section 8.
 
 See also [`DESIGN_SYSTEM.md`](DESIGN_SYSTEM.md) and [`ONBOARDING_UX_SPEC.md`](ONBOARDING_UX_SPEC.md).
 

@@ -47,7 +47,7 @@ npx expo start
 | `npm run test:rls`       | Two-user RLS check through the REST API (local stack only)  |
 | `npm run test:auth`      | End-to-end auth flow with email links (local stack only)    |
 
-A real APK or AAB is built with EAS: `npx eas-cli@latest build --platform android`. Set `android.package` in `app.json` first.
+A real APK or AAB is built with Expo Build (`npx eas-cli@latest build --platform android`). There is no `eas.json` yet. Set `android.package` in `app.json` before the first store build; it cannot change afterwards.
 
 ## Architecture
 
@@ -65,8 +65,9 @@ src/
                           Screen, SectionHeader, Loading/Empty/Error states
     layout/               Coming-soon and configuration-error screens
     navigation/           Native tabs (Android/iOS) and headless tabs (web)
-  features/
+    features/
     auth/                 Auth API, schemas, state, provider, access rules, screens
+    onboarding/           Questionnaire, drafts, completion RPC
     profile/              Profile schema, API, hooks and screen
     home/                 Home screen, data hook, API seam, sample data
     goals/                Goal schema, progress helpers, goal card
@@ -91,7 +92,7 @@ Conventions:
 
 The Home screen reads `src/features/home/sample/today-overview.sample.ts` through `getTodayOverview()` in `today-overview.api.ts`. `TODAY_OVERVIEW_IS_SAMPLE` is `true`, and the screen shows a "Sample data · not saved" chip. Ticking a mission only updates the local query cache; nothing is persisted and no XP is awarded. Replacing the body of `getTodayOverview()` with a Supabase query is the only change the screen needs.
 
-Since Phase 3 the greeting name comes from the user's profile and the chip reads "Sample plan · not saved". The goals and missions stay sample data until their tables exist.
+The greeting name comes from the user's profile and the chip reads "Sample plan · not saved". A minimal `goals` table exists for onboarding, but Home does not query it. Habits, missions and AI coaching are not built yet.
 
 ### Routes reserved for later phases
 
@@ -123,18 +124,26 @@ To run the app against the local stack, set `EXPO_PUBLIC_SUPABASE_URL=http://127
 
 ### Hosted project setup
 
-1. Apply the migration: `npx supabase login`, `npx supabase link --project-ref <ref>`, `npx supabase db push`.
-2. Authentication → URL Configuration: Site URL `aicoach://`; redirect URLs `aicoach://**` (and `exp://**` for Expo Go during development only).
-3. Authentication → Providers → Email: confirm email on, secure password change on, minimum length 8, "letters and digits" required.
-4. Authentication → Rate Limits: keep defaults or stricter; enable CAPTCHA before launch.
-5. Configure custom SMTP before real users sign up.
+The local stack follows `supabase/config.toml`. The hosted dashboard is separate and is **not** updated by committing this repo. Full checklists (Auth URLs, email templates, SMTP, migration order, EAS) are in [`docs/PRODUCTION.md`](docs/PRODUCTION.md). Do not run `npx supabase db push` until that is explicitly approved.
+
+In short:
+
+1. `npx supabase login`, `npx supabase link --project-ref <ref>`, then an **approved** `npx supabase db push`.
+2. Authentication → URL Configuration: Site URL `aicoach://`; redirect URLs `aicoach://**` (and `exp://**` / localhost only while using Expo Go or web).
+3. Authentication → Providers → Email: confirm email on, secure password change on, minimum length 8, letters and digits.
+4. Paste `supabase/templates/*.html` into Authentication → Email Templates (they apply automatically only on the local stack).
+5. Rate limits: keep defaults or stricter; CAPTCHA before public launch.
+6. Custom SMTP before real users. Mailpit (`http://127.0.0.1:54324`) is local only.
 
 ## Configuration and security
 
 Copy [`.env.example`](.env.example) to `.env` (ignored by Git). Only the project URL and the **publishable** key belong in the app: every `EXPO_PUBLIC_` value ships inside the bundle. The app refuses to start with a `sb_secret_` key or a `service_role` JWT.
 
-See [`docs/SECURITY.md`](docs/SECURITY.md) for the security model, what is enforced today and what remains to do, and [`docs/SECURITY-TEST-PLAN.md`](docs/SECURITY-TEST-PLAN.md) for the manual two-account test plan.
+See [`docs/SECURITY.md`](docs/SECURITY.md) for the security model, [`docs/SECURITY-TEST-PLAN.md`](docs/SECURITY-TEST-PLAN.md) for the manual two-account plan, and [`docs/PRODUCTION.md`](docs/PRODUCTION.md) for production-prep checklists. This project is **not** store-ready yet.
 
-## Known limitation on Windows
+## Known limitations
 
-The typed-routes generator emits `/index` instead of `/` when run on Windows, so the root href is cast once in `src/components/navigation/tab-routes.ts` (`rootHref`).
+- **Windows typed routes.** The generator emits `/index` instead of `/`, so the root href is cast once in `src/components/navigation/tab-routes.ts` (`rootHref`).
+- **Expo Doctor.** `npx expo-doctor` reports 19/20: SDK 58 packages are a patch/minor behind the latest on the same SDK. Do not run `npx expo install --fix` without a dedicated upgrade.
+- **Expo Go on Android emulator.** If Expo Go shows `Failed to download remote update`, Metro never received the bundle. Use `npx expo start --localhost`, `adb reverse tcp:8081 tcp:8081`, then `exp://127.0.0.1:8081`.
+- **Web SSR.** Expo static render can log `Requiring unknown module` / multiple-renderers / `ROUTE_NAMES_CHANGED`. The client SPA still runs; web is a development target.

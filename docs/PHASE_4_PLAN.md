@@ -1,6 +1,6 @@
 # Phase 4 implementation plan: design system adoption and onboarding
 
-Status: **approved; implementation not started** (waiting for the go-ahead). No application code has been changed.
+Status: **implemented in the app** (design tokens, motion, onboarding domain, screens, guard on). Original table Step 8 (Welcome motion) shipped with the onboarding screens. Session Step 8 was end-to-end verification; session Step 9 is production-prep documentation. **Hosted `db push` and store builds are not done.** See [`PRODUCTION.md`](PRODUCTION.md).
 
 Inputs: [`DESIGN_SYSTEM.md`](DESIGN_SYSTEM.md), [`MOTION_GUIDELINES.md`](MOTION_GUIDELINES.md), [`ONBOARDING_UX_SPEC.md`](ONBOARDING_UX_SPEC.md) (all approved), [`DATABASE.md`](DATABASE.md), [`SECURITY.md`](SECURITY.md).
 

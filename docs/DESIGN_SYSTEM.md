@@ -3,7 +3,7 @@
 **Creative direction: Soft Purple Playful Minimalism.**
 _"Become who you want to be. A little progress, every single day."_
 
-This document defines the visual language of AI Coach. It is a specification: nothing here is implemented yet. It is written to fit the current code (`src/design/tokens.ts`, `theme.ts`, `useTheme()` and the components in `src/components/ui/`), so adopting it means changing token values and a few component styles, not rebuilding the architecture.
+This document defines the visual language of AI Coach. **Status: adopted in `src/design/` and `src/components/ui/` during Phase 4.** Remaining product screens (goal management, habits, AI coach) still use coming-soon placeholders.
 
 Companion documents: [`MOTION_GUIDELINES.md`](MOTION_GUIDELINES.md) and [`ONBOARDING_UX_SPEC.md`](ONBOARDING_UX_SPEC.md).
 

@@ -5,10 +5,10 @@ import { type TodayOverview, todayOverviewSchema } from './today-overview.schema
 export const TODAY_OVERVIEW_IS_SAMPLE = true;
 
 /**
- * Returns sample data until the goals and missions phases: those tables do not
- * exist yet, so there is nothing real to read. The sample is never written to
- * the database. The response is still validated with the schema the Supabase
- * response will go through, so screens do not change when the source does.
+ * Returns sample data until the goals and missions screens read the database.
+ * A minimal `goals` table exists for onboarding, but Home does not query it.
+ * The sample is never written. The response is validated with the same schema
+ * a Supabase response will use, so screens do not change when the source does.
  */
 export async function getTodayOverview(): Promise<TodayOverview> {
   return todayOverviewSchema.parse(sampleTodayOverview);

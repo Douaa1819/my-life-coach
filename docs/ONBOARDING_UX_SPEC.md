@@ -2,7 +2,7 @@
 
 The onboarding is a **short personal conversation**: one question per screen, about two minutes, ending with a first plan. It runs once, right after the email is confirmed, and decides how the coach talks and what today's first missions look like.
 
-This is a specification only. Nothing is implemented; the questionnaire is planned for Phase 4. It uses the tokens in [`DESIGN_SYSTEM.md`](DESIGN_SYSTEM.md) and the motion in [`MOTION_GUIDELINES.md`](MOTION_GUIDELINES.md), and its answers map to the planned `user_preferences` and `goals` tables in [`DATABASE.md`](DATABASE.md).
+**Status: the questionnaire is live** (`ONBOARDING_REQUIRED = true`). Answers are stored through `complete_onboarding()` into `user_preferences` and `goals`. Daily missions are **not** generated yet; the completion screen says Home still shows a sample plan. Tokens: [`DESIGN_SYSTEM.md`](DESIGN_SYSTEM.md), [`MOTION_GUIDELINES.md`](MOTION_GUIDELINES.md), tables: [`DATABASE.md`](DATABASE.md).
 
 ---
 

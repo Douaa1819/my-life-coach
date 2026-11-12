@@ -12,7 +12,7 @@ Supabase Postgres, managed through versioned migrations in `supabase/migrations/
 - **Indexes.** Every foreign key used in a policy or a list query gets an index, usually `(user_id, <sort column>)`.
 - **Tests.** Each migration that touches a user-owned table adds pgTAP tests in `supabase/tests/database/` that act as two different users.
 
-## Implemented (Phase 3)
+## Implemented (Phase 3–4)
 
 ### `profiles`
 
@@ -30,42 +30,47 @@ Supabase Postgres, managed through versioned migrations in `supabase/migrations/
 - **Privileges.** `authenticated`: `select`, and `update (display_name, avatar_url, timezone)`. `anon`: nothing. No client `insert` or `delete`.
 - **Policies.** `select` and `update` where `(select auth.uid()) = id`. No `insert` or `delete` policy, so both are denied.
 
-## Proposed (not implemented)
-
-Each table below is user-owned: RLS on, `user_id` owner column, `select` policy on ownership, and writes limited as described. Sizes are starting points.
-
 ### `user_preferences`
 
-One row per user, created with the profile.
+One row per user, written only by `public.complete_onboarding()`. Migration: `20261104090000_onboarding.sql`.
 
-| Column                  | Type          | Notes                                      |
-| ----------------------- | ------------- | ------------------------------------------ |
-| `user_id`               | `uuid` PK, FK |                                            |
-| `coach_tone`            | `text`        | `check in ('gentle','direct','energetic')` |
-| `daily_mission_target`  | `smallint`    | 1–10                                       |
-| `focus_areas`           | `text[]`      | From a fixed list, max 5                   |
-| `reminder_time`         | `time` null   | Local to `profiles.timezone`               |
-| `notifications_enabled` | `boolean`     | Default `false`                            |
-| `updated_at`            | `timestamptz` |                                            |
+| Column                     | Type          | Notes                                                                                      |
+| -------------------------- | ------------- | ------------------------------------------------------------------------------------------ |
+| `user_id`                  | `uuid` PK, FK | `auth.users(id)` on delete cascade                                                         |
+| `focus_areas`              | `text[]`      | 1–3 items from `health, career, learning, finance, relationships, personal`, no duplicates |
+| `daily_minutes`            | `smallint`    | 5, 15, 30 or 60                                                                            |
+| `reminder_time`            | `time` null   | Local to `profiles.timezone`. Stored only; nothing is scheduled.                           |
+| `coach_tone`               | `text`        | `gentle`, `direct` or `energetic`                                                          |
+| `created_at`, `updated_at` | `timestamptz` | `updated_at` by trigger                                                                    |
 
-Client may update all columns except `user_id`. Onboarding writes this table and then calls `private.complete_onboarding()`, which sets `profiles.onboarding_completed`.
+**Privileges.** `authenticated`: `select` own row. No client insert, update or delete.
 
 ### `goals`
 
-| Column                     | Type               | Notes                                                                  |
-| -------------------------- | ------------------ | ---------------------------------------------------------------------- |
-| `id`                       | `uuid` PK          | `default gen_random_uuid()`                                            |
-| `user_id`                  | `uuid` FK          | Index `(user_id, status, created_at desc)`                             |
-| `title`                    | `text`             | 1–120                                                                  |
-| `description`              | `text` null        | ≤ 1000                                                                 |
-| `category`                 | `text`             | `personal`, `career`, `health`, `finance`, `learning`, `relationships` |
-| `horizon`                  | `text`             | `3_months`, `6_months`, `1_year`, `5_years` (matches the app enum)     |
-| `status`                   | `text`             | `active`, `paused`, `completed`, `archived`                            |
-| `target_date`              | `date` null        |                                                                        |
-| `completed_at`             | `timestamptz` null | Server-set when status becomes `completed`                             |
-| `created_at`, `updated_at` | `timestamptz`      |                                                                        |
+Minimal table so the onboarding goal has a real home. Clients **select** their own rows only. Insert/update/delete for the goals screens arrive in a later phase. Written today only by `complete_onboarding()`.
 
-Client: `insert` (with check `user_id = auth.uid()`), `update` of title, description, category, horizon, status, target_date; `delete` own. A cap on active goals (for example 10) is enforced by a trigger.
+| Column                     | Type               | Notes                                               |
+| -------------------------- | ------------------ | --------------------------------------------------- |
+| `id`                       | `uuid` PK          | `default gen_random_uuid()`                         |
+| `user_id`                  | `uuid` FK          | Index `(user_id, status, created_at desc)`          |
+| `title`                    | `text`             | 3–120, trimmed, no control characters               |
+| `description`              | `text` null        | ≤ 280, newlines allowed                             |
+| `category`                 | `text`             | Same list as focus areas                            |
+| `horizon`                  | `text`             | `3_months`, `6_months`, `1_year`, `5_years`         |
+| `status`                   | `text`             | `active` default; `paused`, `completed`, `archived` |
+| `target_date`              | `date` null        | Unused in Phase 4                                   |
+| `completed_at`             | `timestamptz` null | Must be set exactly when `status = 'completed'`     |
+| `created_at`, `updated_at` | `timestamptz`      |                                                     |
+
+Home does **not** read this table yet. The Today screen still uses labelled sample data.
+
+### `complete_onboarding(...)`
+
+`security definer`, `search_path = ''`, `execute` granted to `authenticated` only. Identity is `auth.uid()` (no user-id argument). Validates every field, locks the caller's profile, writes preferences and one goal, sets `profiles.onboarding_completed`. A second call raises `P0001` / `already_completed` and changes nothing.
+
+## Proposed (not implemented)
+
+Each table below is user-owned: RLS on, `user_id` owner column, `select` policy on ownership, and writes limited as described. Sizes are starting points. `user_preferences` and `goals` above are already in the database; do not recreate them.
 
 ### `milestones`
 
