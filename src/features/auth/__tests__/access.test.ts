@@ -1,4 +1,4 @@
-import { getAppRedirect, resolveAccess } from '../access';
+import { getAppRedirect, ONBOARDING_REQUIRED, resolveAccess } from '../access';
 
 const signedIn = { status: 'signedIn', isRecovery: false } as const;
 
@@ -18,8 +18,30 @@ describe('resolveAccess', () => {
     ).toBe('signedOut');
   });
 
-  test('signed-in users reach the app', () => {
-    expect(resolveAccess({ auth: signedIn, onboardingCompleted: undefined })).toBe('app');
+  test('onboarding is required in this build', () => {
+    expect(ONBOARDING_REQUIRED).toBe(true);
+  });
+
+  test('signed-in users wait for their own profile before anything protected opens', () => {
+    expect(resolveAccess({ auth: signedIn, onboardingCompleted: undefined })).toBe('loading');
+  });
+
+  test('an incomplete profile opens onboarding', () => {
+    expect(resolveAccess({ auth: signedIn, onboardingCompleted: false })).toBe('onboarding');
+  });
+
+  test('a completed profile opens the app', () => {
+    expect(resolveAccess({ auth: signedIn, onboardingCompleted: true })).toBe('app');
+  });
+
+  test('a profile that cannot be loaded shows an account error, not an endless loader', () => {
+    expect(
+      resolveAccess({
+        auth: signedIn,
+        onboardingCompleted: undefined,
+        profileFailed: true,
+      }),
+    ).toBe('accountError');
   });
 
   test('a recovery session is held on the reset screen', () => {
@@ -77,6 +99,16 @@ describe('resolveAccess', () => {
           onboardingRequired: true,
         }),
       ).toBe('recovery');
+    });
+
+    test('the app can still be opened when onboarding is not required', () => {
+      expect(
+        resolveAccess({
+          auth: signedIn,
+          onboardingCompleted: false,
+          onboardingRequired: false,
+        }),
+      ).toBe('app');
     });
   });
 });

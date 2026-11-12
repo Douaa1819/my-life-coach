@@ -3,10 +3,11 @@ import { type Href } from 'expo-router';
 import { type AuthState } from './auth-state';
 
 /**
- * Onboarding is routed but not built yet. Turn this on in the onboarding phase,
- * together with the server-side function that sets profiles.onboarding_completed.
+ * Signed-in users without profiles.onboarding_completed stay on /onboarding.
+ * The flag is set only by complete_onboarding(); existing incomplete profiles
+ * are sent through the questionnaire once and are not backfilled.
  */
-export const ONBOARDING_REQUIRED = false;
+export const ONBOARDING_REQUIRED = true;
 
 export type Access = 'loading' | 'signedOut' | 'recovery' | 'accountError' | 'onboarding' | 'app';
 

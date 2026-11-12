@@ -55,7 +55,7 @@ These are requirements, not implemented yet.
 - **Links open on another device** cannot complete the PKCE exchange; the user is asked to open the link on the phone or sign in. This is by design.
 - **Default email sender.** Supabase's built-in SMTP is rate limited and for testing only; production needs custom SMTP.
 - **Account deletion** is not available in the app yet. It needs an Edge Function using the admin API; profile rows cascade.
-- **Onboarding flag** is server-owned, but nothing sets it yet. The onboarding phase must add a `security definer` function to complete onboarding and then set `ONBOARDING_REQUIRED` to `true`.
+- **Onboarding flag** is server-owned. Clients cannot write `profiles.onboarding_completed`; only the `complete_onboarding` security-definer function sets it for `auth.uid()`. `ONBOARDING_REQUIRED` is on, so incomplete profiles stay on `/onboarding`.
 - **Home sample data.** Goals and missions on Home are still sample data, labelled "Sample plan · not saved". Only the name comes from the database.
 - **Android device verification.** The auth flow was verified with automated tests, against the local Auth server, and in the web build; it still needs a run on a real Android device (deep links, keyboard, SecureStore). See [`SECURITY-TEST-PLAN.md`](SECURITY-TEST-PLAN.md).
 - **`android.package` is not set.** It must be chosen before the first EAS build and cannot change after publishing.

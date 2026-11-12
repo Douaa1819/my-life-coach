@@ -1,6 +1,6 @@
 # AI Coach
 
-Expo mobile app (Android first, iOS and web compatible) for an AI personal coach. It contains the **Phase 2 foundation** (design system, navigation, Home driven by sample data, hardened Supabase client, quality tooling) and **Phase 3 authentication and database foundation** (email and password auth with verification and reset, protected routes, a `profiles` table with Row Level Security). Onboarding, goals, habits, missions and AI coaching are intentionally not implemented yet.
+Expo mobile app (Android first, iOS and web compatible) for an AI personal coach. It contains the **Phase 2 foundation** (design system, navigation, Home driven by sample data, hardened Supabase client, quality tooling), **Phase 3 authentication and database foundation** (email and password auth with verification and reset, protected routes, a `profiles` table with Row Level Security), and **Phase 4 onboarding** (questionnaire, drafts, and a server-owned completion flag). Goals, habits, missions and AI coaching are not implemented yet.
 
 ## Stack
 
@@ -95,7 +95,7 @@ Since Phase 3 the greeting name comes from the user's profile and the chip reads
 
 ### Routes reserved for later phases
 
-Goals, Habits, Coach, Missions, Progress and Onboarding exist as routes with a "coming soon" screen so navigation and deep links are stable.
+Goals, Habits, Coach, Missions and Progress exist as routes with a "coming soon" screen so navigation and deep links are stable. Onboarding is live for signed-in users whose profile is not yet completed.
 
 ## Authentication
 
@@ -104,7 +104,7 @@ Supabase Auth with email and password and the PKCE flow. Code lives in `src/feat
 - `AuthProvider` subscribes to `onAuthStateChange` and reduces events into `loading`, `signedOut` or `signedIn` (`auth-state.ts`).
 - `resolveAccess()` turns that into `loading`, `signedOut`, `recovery`, `onboarding` or `app`, and `RootNavigator` uses `Stack.Protected` guards on it. The splash screen stays visible while the stored session is read.
 - Email links redirect to `aicoach://verify-email` and `aicoach://reset-password` (`exp://…/--/…` in Expo Go). The screen exchanges the `code` for a session.
-- Onboarding redirection is wired but off: set `ONBOARDING_REQUIRED` in `src/features/auth/access.ts` to `true` once the questionnaire and its server-side completion function exist.
+- Signed-in users without `profiles.onboarding_completed` are sent to `/onboarding`. The server-side `complete_onboarding` function is the only way that flag becomes true.
 
 ## Database
 
