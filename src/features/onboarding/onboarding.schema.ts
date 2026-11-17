@@ -1,49 +1,38 @@
 import { z } from 'zod';
 
-import { goalHorizons, type GoalHorizon } from '@/features/goals/goal.schema';
+import {
+  GOAL_DESCRIPTION_MAX_LENGTH,
+  GOAL_TITLE_MAX_LENGTH,
+  GOAL_TITLE_MIN_LENGTH,
+  goalCategories,
+  goalCategoryLabels,
+  goalDescriptionSchema,
+  goalHorizonOptions,
+  goalHorizons,
+  goalSuggestions,
+  goalTitleSchema,
+  type GoalCategory,
+  type GoalHorizon,
+} from '@/features/goals/goal.schema';
 import { DISPLAY_NAME_MAX_LENGTH, displayNameSchema } from '@/features/profile/profile.schema';
 
-/** Mirrors the allowed values in the onboarding migration. The database is the authority. */
-export const focusAreas = [
-  'health',
-  'career',
-  'learning',
-  'finance',
-  'relationships',
-  'personal',
-] as const;
-export type FocusArea = (typeof focusAreas)[number];
+export {
+  GOAL_TITLE_MAX_LENGTH,
+  GOAL_TITLE_MIN_LENGTH,
+  goalHorizons,
+  goalTitleSchema,
+  type GoalHorizon,
+};
+
+/** Same allowed values as `public.goals.category` and onboarding focus areas. */
+export const focusAreas = goalCategories;
+export type FocusArea = GoalCategory;
 export const MAX_FOCUS_AREAS = 3;
-
-export const focusAreaLabels: Record<FocusArea, string> = {
-  health: 'Health & fitness',
-  career: 'Career',
-  learning: 'Learning',
-  finance: 'Money',
-  relationships: 'Relationships',
-  personal: 'Personal growth',
-};
-
-export const goalSuggestions: Record<FocusArea, readonly [string, string, string]> = {
-  health: ['Run 5 km', 'Sleep before 11 pm', 'Cook at home more'],
-  career: ['Ask for a promotion', 'Learn a new skill for work', 'Update my CV'],
-  learning: ['Read 12 books this year', 'Learn basic Spanish', 'Finish an online course'],
-  finance: ['Save an emergency fund', 'Track my spending', 'Pay off a debt'],
-  relationships: ['Call my family weekly', 'Make new friends', 'Plan more date nights'],
-  personal: ['Meditate daily', 'Journal every evening', 'Spend less time on my phone'],
-};
-
-export const GOAL_TITLE_MIN_LENGTH = 3;
-export const GOAL_TITLE_MAX_LENGTH = 120;
-export const MOTIVATION_MAX_LENGTH = 280;
-
-export const horizonOptions: readonly { value: GoalHorizon; label: string; description: string }[] =
-  [
-    { value: '3_months', label: 'In 3 months', description: 'A focused sprint' },
-    { value: '6_months', label: 'In 6 months', description: 'Steady progress' },
-    { value: '1_year', label: 'In a year', description: 'A real change' },
-    { value: '5_years', label: 'In 5 years', description: 'A long journey' },
-  ];
+export const focusAreaLabels = goalCategoryLabels;
+export const MOTIVATION_MAX_LENGTH = GOAL_DESCRIPTION_MAX_LENGTH;
+export const motivationSchema = goalDescriptionSchema;
+export const horizonOptions = goalHorizonOptions;
+export { goalSuggestions };
 
 export const dailyMinutesValues = [5, 15, 30, 60] as const;
 export type DailyMinutes = (typeof dailyMinutesValues)[number];
@@ -162,41 +151,11 @@ export function clampToCodePoints(value: string, limit: number) {
   return characters.length > limit ? characters.slice(0, limit).join('') : value;
 }
 
-function hasControlCharacters(value: string, allowNewlines: boolean) {
-  for (const character of value) {
-    if (allowNewlines && character === '\n') continue;
-    const code = character.codePointAt(0) ?? 0;
-    if (code < 0x20 || (code >= 0x7f && code <= 0x9f)) return true;
-  }
-  return false;
-}
-
 export const focusAreasSchema = z
   .array(z.enum(focusAreas))
   .min(1, 'Pick at least one area.')
   .max(MAX_FOCUS_AREAS, 'You can pick up to three.')
   .refine((areas) => new Set(areas).size === areas.length, { error: 'Pick each area once.' });
-
-export const goalTitleSchema = z
-  .string()
-  .trim()
-  .refine((value) => codePointLength(value) >= GOAL_TITLE_MIN_LENGTH, {
-    error: 'Tell me a bit more, at least 3 characters.',
-  })
-  .refine((value) => codePointLength(value) <= GOAL_TITLE_MAX_LENGTH, {
-    error: `Keep it under ${GOAL_TITLE_MAX_LENGTH} characters.`,
-  })
-  .refine((value) => !hasControlCharacters(value, false), { error: 'Remove special characters.' });
-
-/** Empty means skipped. */
-export const motivationSchema = z
-  .string()
-  .trim()
-  .refine((value) => codePointLength(value) <= MOTIVATION_MAX_LENGTH, {
-    error: `Keep it under ${MOTIVATION_MAX_LENGTH} characters.`,
-  })
-  .refine((value) => !hasControlCharacters(value, true), { error: 'Remove special characters.' })
-  .transform((value) => (value === '' ? null : value));
 
 /** The validated payload for `complete_onboarding`, built only from complete answers. */
 export const onboardingAnswersSchema = z

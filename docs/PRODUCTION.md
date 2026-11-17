@@ -1,6 +1,6 @@
 # Production preparation
 
-This is a **checklist**, not a go-live. The app is an Expo SDK 58 client with email/password auth and onboarding. Goals, habits, missions and AI coaching are not product features yet. Home still shows a labelled sample plan.
+This is a **checklist**, not a go-live. The app is an Expo SDK 58 client with email/password auth, onboarding and local goal management. Habits, missions and AI coaching are not product features yet. Home still shows labelled sample missions; goals are real. The goals write policies live in `supabase/migrations/` and are **not** assumed to be on the hosted project until an approved `db push`.
 
 Do not run `npx supabase db push`, production SQL, or a store build until these steps are approved explicitly.
 

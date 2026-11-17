@@ -54,6 +54,7 @@ export function RootNavigator() {
           }}>
           <Stack.Protected guard={access === 'app'} redirectTo={getAppRedirect(access)}>
             <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+            <Stack.Screen name="goal" options={{ headerShown: false }} />
             <Stack.Screen name="missions" options={{ title: "Today's missions" }} />
             <Stack.Screen name="progress" options={{ title: 'Progress' }} />
           </Stack.Protected>

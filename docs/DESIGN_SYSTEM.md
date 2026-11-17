@@ -3,7 +3,7 @@
 **Creative direction: Soft Purple Playful Minimalism.**
 _"Become who you want to be. A little progress, every single day."_
 
-This document defines the visual language of AI Coach. **Status: adopted in `src/design/` and `src/components/ui/` during Phase 4.** Remaining product screens (goal management, habits, AI coach) still use coming-soon placeholders.
+This document defines the visual language of AI Coach. **Status: adopted in `src/design/` and `src/components/ui/` during Phase 4.** Goal management uses these tokens. Habits and AI coach still use coming-soon placeholders.
 
 Companion documents: [`MOTION_GUIDELINES.md`](MOTION_GUIDELINES.md) and [`ONBOARDING_UX_SPEC.md`](ONBOARDING_UX_SPEC.md).
 

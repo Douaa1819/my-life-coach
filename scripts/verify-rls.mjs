@@ -155,14 +155,6 @@ try {
     'no error',
   );
 
-  const directGoal = await alice.client.from('goals').insert({
-    user_id: alice.id,
-    title: 'Sneaky goal',
-    category: 'health',
-    horizon: '1_year',
-  });
-  check('clients cannot insert goals directly', directGoal.error?.code === '42501');
-
   const directPreferences = await alice.client.from('user_preferences').insert({
     user_id: alice.id,
     focus_areas: ['health'],
@@ -214,6 +206,137 @@ try {
     "the other user's onboarding state is unchanged",
     bobProfileAfter.data?.onboarding_completed === false,
   );
+
+  const stealGoal = await alice.client
+    .from('goals')
+    .insert({
+      user_id: bob.id,
+      title: 'Sneaky goal',
+      category: 'health',
+      horizon: '1_year',
+    })
+    .select('user_id');
+  check(
+    'clients cannot insert a goal for another user',
+    Boolean(stealGoal.error) || (stealGoal.data ?? []).every((row) => row.user_id !== bob.id),
+    stealGoal.error?.code,
+  );
+
+  const ownInsert = await alice.client
+    .from('goals')
+    .insert({
+      title: 'Walk every morning',
+      category: 'health',
+      horizon: '3_months',
+      description: 'Start small',
+      target_date: '2027-02-01',
+    })
+    .select('id, user_id, title, status, completed_at')
+    .single();
+  check(
+    'a user can insert their own goal',
+    !ownInsert.error && ownInsert.data?.user_id === alice.id && ownInsert.data.status === 'active',
+    ownInsert.error?.code,
+  );
+
+  const invalidGoal = await alice.client.from('goals').insert({
+    title: 'Go',
+    category: 'health',
+    horizon: '6_months',
+  });
+  check('invalid goal titles are rejected by the database', invalidGoal.error?.code === '23514');
+
+  const bobInsert = await bob.client
+    .from('goals')
+    .insert({ title: 'Get promoted', category: 'career', horizon: '1_year' })
+    .select('id, title')
+    .single();
+  check('the second user can insert their own goal', !bobInsert.error, bobInsert.error?.code);
+  const bobGoalId = bobInsert.data?.id;
+  const ownGoalId = ownInsert.data?.id;
+
+  if (bobGoalId) {
+    const aliceTouchesBob = await alice.client
+      .from('goals')
+      .update({ title: 'Hacked' })
+      .eq('id', bobGoalId)
+      .select('id');
+    check(
+      "updating another user's goal changes no rows",
+      !aliceTouchesBob.error && aliceTouchesBob.data.length === 0,
+    );
+
+    const aliceReadsBobGoal = await alice.client.from('goals').select('id').eq('id', bobGoalId);
+    check(
+      "a user cannot read another user's goal by id",
+      !aliceReadsBobGoal.error && aliceReadsBobGoal.data.length === 0,
+    );
+
+    const aliceDeletesBob = await alice.client
+      .from('goals')
+      .delete()
+      .eq('id', bobGoalId)
+      .select('id');
+    check(
+      "deleting another user's goal changes no rows",
+      !aliceDeletesBob.error && aliceDeletesBob.data.length === 0,
+    );
+
+    const bobStillHasGoal = await bob.client.from('goals').select('id, title').eq('id', bobGoalId);
+    check(
+      "the other user's goal is unchanged",
+      bobStillHasGoal.data?.length === 1 && bobStillHasGoal.data[0].title === 'Get promoted',
+    );
+  }
+
+  if (ownGoalId) {
+    const completedAtWrite = await alice.client
+      .from('goals')
+      .update({ completed_at: new Date().toISOString() })
+      .eq('id', ownGoalId);
+    check(
+      'completed_at cannot be set by the client',
+      completedAtWrite.error?.code === '42501' || completedAtWrite.error?.code === 'PGRST204',
+      completedAtWrite.error?.code ?? 'no error',
+    );
+
+    const ownerWrite = await alice.client
+      .from('goals')
+      .update({ user_id: bob.id })
+      .eq('id', ownGoalId);
+    check(
+      'user_id cannot be changed',
+      ownerWrite.error?.code === '42501' || ownerWrite.error?.code === 'PGRST204',
+      ownerWrite.error?.code ?? 'no error',
+    );
+
+    const completeOwn = await alice.client
+      .from('goals')
+      .update({ status: 'completed' })
+      .eq('id', ownGoalId)
+      .select('status, completed_at')
+      .single();
+    check(
+      'completing a goal sets completed_at on the server',
+      completeOwn.data?.status === 'completed' && Boolean(completeOwn.data.completed_at),
+      completeOwn.error?.code,
+    );
+
+    const archiveOwn = await alice.client
+      .from('goals')
+      .update({ status: 'archived' })
+      .eq('id', ownGoalId)
+      .select('status, completed_at')
+      .single();
+    check(
+      'archiving a goal clears completed_at',
+      archiveOwn.data?.status === 'archived' && archiveOwn.data.completed_at === null,
+      archiveOwn.error?.code,
+    );
+
+    const deleteOwn = await alice.client.from('goals').delete().eq('id', ownGoalId).select('id');
+    check('a user can delete their own goal', !deleteOwn.error && deleteOwn.data.length === 1);
+  }
 } finally {
   await admin.auth.admin.deleteUser(alice.id);
   await admin.auth.admin.deleteUser(bob.id);

@@ -47,7 +47,7 @@ One row per user, written only by `public.complete_onboarding()`. Migration: `20
 
 ### `goals`
 
-Minimal table so the onboarding goal has a real home. Clients **select** their own rows only. Insert/update/delete for the goals screens arrive in a later phase. Written today only by `complete_onboarding()`.
+Onboarding still writes the first row through `complete_onboarding()`. The goals screens write further rows with the same constraints. Migration `20261113180000_goals_client_writes.sql` adds client insert/update/delete. There is **no** `priority`, progress-percent or `milestones` column; those stay proposed.
 
 | Column                     | Type               | Notes                                               |
 | -------------------------- | ------------------ | --------------------------------------------------- |
@@ -58,11 +58,15 @@ Minimal table so the onboarding goal has a real home. Clients **select** their o
 | `category`                 | `text`             | Same list as focus areas                            |
 | `horizon`                  | `text`             | `3_months`, `6_months`, `1_year`, `5_years`         |
 | `status`                   | `text`             | `active` default; `paused`, `completed`, `archived` |
-| `target_date`              | `date` null        | Unused in Phase 4                                   |
+| `target_date`              | `date` null        | Optional deadline. Clients may set it.              |
 | `completed_at`             | `timestamptz` null | Must be set exactly when `status = 'completed'`     |
 | `created_at`, `updated_at` | `timestamptz`      |                                                     |
 
-Home does **not** read this table yet. The Today screen still uses labelled sample data.
+**Privileges.** `authenticated`: `select`; `insert (title, description, category, horizon, status, target_date)`; `update` of those same columns; `delete`. `user_id` defaults to `auth.uid()` and is not granted. `completed_at` is set by `private.goals_sync_completed_at()` when `status` becomes `completed`, and cleared otherwise.
+
+**Policies.** `select` / `insert` / `update` / `delete` where `(select auth.uid()) = user_id`.
+
+Home reads **active and paused** goals for the signed-in user. Missions on Home remain sample data.
 
 ### `complete_onboarding(...)`
 

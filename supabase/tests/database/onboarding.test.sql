@@ -1,7 +1,7 @@
 begin;
 create extension if not exists pgtap with schema extensions;
 
-select plan(43);
+select plan(40);
 
 insert into auth.users (id, email, raw_user_meta_data)
 values
@@ -68,18 +68,8 @@ select throws_ok(
      values ('11111111-1111-4111-8111-111111111111', array['health'], 5, 'gentle') $$,
   '42501', null, 'clients cannot insert preferences');
 select throws_ok(
-  $$ insert into public.goals (user_id, title, category, horizon)
-     values ('11111111-1111-4111-8111-111111111111', 'Run 5 km', 'health', '6_months') $$,
-  '42501', null, 'clients cannot insert goals');
-select throws_ok(
-  $$ update public.goals set title = 'Hacked' where id = 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa' $$,
-  '42501', null, 'clients cannot update goals');
-select throws_ok(
   $$ update public.user_preferences set coach_tone = 'gentle' $$,
   '42501', null, 'clients cannot update preferences');
-select throws_ok(
-  $$ delete from public.goals where id = 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa' $$,
-  '42501', null, 'clients cannot delete goals');
 select throws_ok(
   $$ delete from public.user_preferences $$,
   '42501', null, 'clients cannot delete preferences');

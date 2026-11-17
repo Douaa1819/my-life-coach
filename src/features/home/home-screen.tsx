@@ -4,6 +4,8 @@ import { RefreshControl } from 'react-native';
 
 import { Chip, ErrorState, LoadingState, Screen } from '@/components/ui';
 import { useTheme } from '@/design';
+import { goalHrefs } from '@/features/goals/goal-routes';
+import { useGoals } from '@/features/goals/use-goals';
 import { getDailyProgress } from '@/features/missions/daily-progress';
 import { useProfile } from '@/features/profile/use-profile';
 
@@ -20,6 +22,7 @@ export function HomeScreen({ now = new Date() }: { now?: Date }) {
   const { colors } = useTheme();
   const overview = useTodayOverview();
   const profile = useProfile();
+  const goals = useGoals();
   const toggleMission = useToggleMission();
 
   const progress = useMemo(
@@ -56,12 +59,13 @@ export function HomeScreen({ now = new Date() }: { now?: Date }) {
           onRefresh={() => {
             void overview.refetch();
             void profile.refetch();
+            void goals.refetch();
           }}
           tintColor={colors.primary}
           colors={[colors.primary]}
         />
       }>
-      {TODAY_OVERVIEW_IS_SAMPLE && <Chip label="Sample plan · not saved" />}
+      {TODAY_OVERVIEW_IS_SAMPLE && <Chip label="Sample missions · not saved" />}
       <HomeHeader
         greeting={getGreeting(now)}
         firstName={profile.data?.displayName ?? null}
@@ -78,7 +82,16 @@ export function HomeScreen({ now = new Date() }: { now?: Date }) {
         suggestion={data.coachSuggestion}
         onOpenCoach={() => router.navigate('/coach')}
       />
-      <GoalsPreview goals={data.focusGoals} onSeeAll={() => router.navigate('/goals')} />
+      <GoalsPreview
+        goals={goals.data}
+        isPending={goals.isPending}
+        isError={goals.isError}
+        error={goals.error}
+        onSeeAll={() => router.navigate('/goals')}
+        onOpenGoal={(goalId) => router.push(goalHrefs.detail(goalId))}
+        onRetry={() => void goals.refetch()}
+        onAdd={() => router.push(goalHrefs.create)}
+      />
     </Screen>
   );
 }
