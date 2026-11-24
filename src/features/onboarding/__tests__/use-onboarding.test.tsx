@@ -233,3 +233,32 @@ describe('useOnboarding', () => {
     expect(result.current.state.answers.goalTitle).toBe('');
   });
 });
+
+describe('useOnboarding draft save failures', () => {
+  test('a store that rejects or throws never breaks the flow or leaks a rejection', async () => {
+    const { save, render } = setup();
+    const unhandled = jest.fn();
+    process.on('unhandledRejection', unhandled);
+
+    const { result } = await render();
+    await ready(result);
+    save.mockRejectedValueOnce(new Error('keystore unavailable'));
+    await act(async () => {
+      result.current.dispatch({ type: 'next' });
+    });
+    await waitFor(() => expect(save).toHaveBeenCalledTimes(1));
+
+    save.mockImplementationOnce(() => {
+      throw new Error('sync failure');
+    });
+    await act(async () => {
+      result.current.dispatch({ type: 'next' });
+    });
+    await waitFor(() => expect(save).toHaveBeenCalledTimes(2));
+    await new Promise<void>((resolve) => setImmediate(() => resolve()));
+
+    expect(result.current.state.step).toBe('focusAreas');
+    expect(unhandled).not.toHaveBeenCalled();
+    process.off('unhandledRejection', unhandled);
+  });
+});

@@ -20,6 +20,18 @@ type UseOnboardingOptions = {
 
 type Submission = { userId: string; answers: OnboardingAnswers };
 
+/** The store promises not to throw; a lost draft must still never become an unhandled rejection. */
+function saveQuietly(
+  store: OnboardingDraftStore,
+  ...args: Parameters<OnboardingDraftStore['save']>
+): void {
+  try {
+    store.save(...args).catch(() => undefined);
+  } catch {
+    // A synchronous failure is treated the same way: the draft is simply not saved.
+  }
+}
+
 export function useOnboarding({
   userId,
   initialName,
@@ -60,7 +72,7 @@ export function useOnboarding({
 
   useEffect(() => {
     if (!canSave || !state.pendingSave) return;
-    void draftStore.save(userId, state.step, state.answers);
+    saveQuietly(draftStore, userId, state.step, state.answers);
     dispatch({ type: 'saved', navigation: state.navigation });
   }, [canSave, draftStore, state, userId]);
 
@@ -70,7 +82,7 @@ export function useOnboarding({
       if (next === 'active') return;
       const current = latest.current;
       if (!current.canSave) return;
-      void current.draftStore.save(current.userId, current.state.step, current.state.answers);
+      saveQuietly(current.draftStore, current.userId, current.state.step, current.state.answers);
     });
     return () => subscription.remove();
   }, []);
