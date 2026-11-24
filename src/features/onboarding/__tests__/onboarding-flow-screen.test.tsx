@@ -51,13 +51,13 @@ function flow(state: Partial<OnboardingState> = {}, extra: Partial<Onboarding> =
 
 /** Captures the hardware back handler the screen registers while focused. */
 function captureBackHandler() {
-  let handler: (() => boolean | null | undefined) | undefined;
+  let handler: Parameters<typeof BackHandler.addEventListener>[1] | undefined;
   const remove = jest.fn();
   jest.spyOn(BackHandler, 'addEventListener').mockImplementation((_event, callback) => {
     handler = callback;
     return { remove };
   });
-  return { press: () => handler?.(), remove };
+  return { press: () => handler?.({} as never), remove };
 }
 
 async function renderFlow(onboarding: Onboarding) {
