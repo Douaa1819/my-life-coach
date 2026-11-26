@@ -66,7 +66,7 @@ Onboarding still writes the first row through `complete_onboarding()`. The goals
 
 **Policies.** `select` / `insert` / `update` / `delete` where `(select auth.uid()) = user_id`.
 
-Home reads **active and paused** goals for the signed-in user. Missions on Home remain sample data.
+Home reads the signed-in user's goals (a summary of active and completed counts, plus a preview of active and paused goals). There is no missions or streak table yet: Home shows a "Daily missions are coming soon" placeholder instead of sample data.
 
 ### `complete_onboarding(...)`
 
