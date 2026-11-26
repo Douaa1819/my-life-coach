@@ -14,6 +14,7 @@ import {
 import { radius, spacing, useTheme } from '@/design';
 
 import { confirmGoalChange } from '../confirm-goal-change';
+import { leaveScreen } from '../leave-screen';
 import { goalHrefs } from '../goal-routes';
 import { formatGoalDeadline, formatGoalHorizon, formatGoalStatus } from '../goal-progress';
 import { goalCategoryLabels, type Goal } from '../goal.schema';
@@ -177,7 +178,7 @@ function GoalDetailBody({ goal }: { goal: Goal }) {
               destructive: true,
               onConfirm: () => {
                 deleteMutation.mutate(undefined, {
-                  onSuccess: () => router.back(),
+                  onSuccess: () => leaveScreen(goalHrefs.list),
                 });
               },
             })

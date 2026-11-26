@@ -11,7 +11,12 @@ const mockMutateStatus = jest.fn();
 const mockMutateDelete = jest.fn();
 
 jest.mock('expo-router', () => ({
-  router: { push: (...args: unknown[]) => mockPush(...args), back: () => mockBack() },
+  router: {
+    push: (...args: unknown[]) => mockPush(...args),
+    back: () => mockBack(),
+    canGoBack: () => true,
+    replace: jest.fn(),
+  },
 }));
 
 jest.mock('../use-goals', () => ({

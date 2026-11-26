@@ -1,9 +1,9 @@
-import { router } from 'expo-router';
-
 import { ErrorState, LoadingState, Screen } from '@/components/ui';
 
 import { GoalForm } from '../components/goal-form';
 import { goalLoadErrorMessage, goalSaveErrorMessage } from '../goal-errors';
+import { goalHrefs } from '../goal-routes';
+import { leaveScreen } from '../leave-screen';
 import { useGoal, useUpdateGoal } from '../use-goals';
 
 export function GoalEditScreen({ goalId }: { goalId: string }) {
@@ -37,7 +37,7 @@ export function GoalEditScreen({ goalId }: { goalId: string }) {
       errorMessage={update.isError ? goalSaveErrorMessage(update.error) : null}
       onSubmit={(input) => {
         update.mutate(input, {
-          onSuccess: () => router.back(),
+          onSuccess: (saved) => leaveScreen(goalHrefs.detail(saved.id)),
         });
       }}
     />

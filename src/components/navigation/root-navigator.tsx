@@ -1,5 +1,5 @@
-import { SplashScreen, Stack } from 'expo-router';
-import { useEffect, useState } from 'react';
+import { SplashScreen, Stack, useSegments } from 'expo-router';
+import { useEffect } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { LoadingState } from '@/components/ui';
@@ -21,8 +21,11 @@ export function RootNavigator() {
   const { colors } = useTheme();
   const access = useAccess();
   const isLoading = access === 'loading';
-  const [splashTimedOut, setSplashTimedOut] = useState(false);
-  const showLoader = isLoading && splashTimedOut;
+  // A cold load of a protected URL (a refresh on a goal, a deep link) stays mounted while
+  // access resolves, so the router does not redirect it to Home. The loader hides it until
+  // then. Auth screens are not covered: they are the open branch while loading.
+  const isAuthRoute = (useSegments() as string[])[0] === '(auth)';
+  const showLoader = isLoading && !isAuthRoute;
   const isCovered = showLoader || access === 'accountError';
 
   useEffect(() => {
@@ -30,10 +33,7 @@ export function RootNavigator() {
       SplashScreen.hide();
       return;
     }
-    const timer = setTimeout(() => {
-      setSplashTimedOut(true);
-      SplashScreen.hide();
-    }, SPLASH_TIMEOUT_MS);
+    const timer = setTimeout(() => SplashScreen.hide(), SPLASH_TIMEOUT_MS);
     return () => clearTimeout(timer);
   }, [isLoading]);
 
@@ -52,7 +52,9 @@ export function RootNavigator() {
             headerTitleStyle: { fontWeight: typography.headline.fontWeight },
             contentStyle: { backgroundColor: colors.background },
           }}>
-          <Stack.Protected guard={access === 'app'} redirectTo={getAppRedirect(access)}>
+          <Stack.Protected
+            guard={access === 'app' || access === 'loading'}
+            redirectTo={getAppRedirect(access)}>
             <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
             <Stack.Screen name="goal" options={{ headerShown: false }} />
             <Stack.Screen name="missions" options={{ title: "Today's missions" }} />
