@@ -1,6 +1,6 @@
 import { StyleSheet, View } from 'react-native';
 
-import { Chip, Text } from '@/components/ui';
+import { Text } from '@/components/ui';
 import { spacing } from '@/design';
 
 type HomeHeaderProps = {
@@ -8,10 +8,9 @@ type HomeHeaderProps = {
   /** Null while the profile loads or if it cannot be read. */
   firstName: string | null;
   dateLabel: string;
-  streakDays: number;
 };
 
-export function HomeHeader({ greeting, firstName, dateLabel, streakDays }: HomeHeaderProps) {
+export function HomeHeader({ greeting, firstName, dateLabel }: HomeHeaderProps) {
   return (
     <View style={styles.container}>
       <Text variant="overline" color="textSecondary">
@@ -20,7 +19,6 @@ export function HomeHeader({ greeting, firstName, dateLabel, streakDays }: HomeH
       <Text variant="display" role="heading">
         {firstName ? `${greeting}, ${firstName}` : greeting}
       </Text>
-      {streakDays > 0 && <Chip tone="warning" icon="streak" label={`${streakDays}-day streak`} />}
     </View>
   );
 }

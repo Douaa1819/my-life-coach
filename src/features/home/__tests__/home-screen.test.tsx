@@ -1,4 +1,4 @@
-import { screen, userEvent } from '@testing-library/react-native';
+import { screen } from '@testing-library/react-native';
 
 import { HomeScreen } from '@/features/home/home-screen';
 import { renderWithProviders } from '@/test/render';
@@ -41,26 +41,15 @@ jest.mock('@/features/goals/use-goals', () => ({
 const morning = new Date(2026, 10, 3, 9, 0, 0);
 
 describe('HomeScreen', () => {
-  test('shows the welcome, progress, missions, coach entry and real goals', async () => {
+  test('shows real goals, a goals summary and an honest missions placeholder', async () => {
     await renderWithProviders(<HomeScreen now={morning} />);
 
     expect(await screen.findByRole('heading', { name: 'Good morning, Sara' })).toBeOnTheScreen();
-    expect(screen.getByText('Sample missions · not saved')).toBeOnTheScreen();
-    expect(screen.getByText('1 of 4 missions')).toBeOnTheScreen();
-    expect(screen.getByRole('checkbox', { name: 'Easy 25-minute run' })).toBeChecked();
-    expect(screen.getByRole('button', { name: 'Talk it through' })).toBeOnTheScreen();
     expect(screen.getByText('Train for the spring 10k')).toBeOnTheScreen();
-    expect(screen.queryByText('of 6 milestones')).toBeNull();
-  });
-
-  test('toggling a mission updates the daily progress', async () => {
-    const user = userEvent.setup();
-    await renderWithProviders(<HomeScreen now={morning} />);
-
-    const mission = await screen.findByRole('checkbox', { name: 'Read 20 pages before bed' });
-    await user.press(mission);
-
-    expect(await screen.findByText('2 of 4 missions')).toBeOnTheScreen();
-    expect(screen.getByRole('checkbox', { name: 'Read 20 pages before bed' })).toBeChecked();
+    expect(screen.getByLabelText('Goals: 1 in progress, 0 completed')).toBeOnTheScreen();
+    expect(screen.getByText('Daily missions are coming soon')).toBeOnTheScreen();
+    expect(screen.getByRole('button', { name: 'Talk it through' })).toBeOnTheScreen();
+    expect(screen.queryByText(/-day streak/)).toBeNull();
+    expect(screen.queryByText(/Sample/)).toBeNull();
   });
 });

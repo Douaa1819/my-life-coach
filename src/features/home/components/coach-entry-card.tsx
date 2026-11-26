@@ -4,11 +4,10 @@ import { Button, Card, Icon, Text } from '@/components/ui';
 import { radius, spacing, useTheme } from '@/design';
 
 type CoachEntryCardProps = {
-  suggestion: string;
   onOpenCoach: () => void;
 };
 
-export function CoachEntryCard({ suggestion, onOpenCoach }: CoachEntryCardProps) {
+export function CoachEntryCard({ onOpenCoach }: CoachEntryCardProps) {
   const { colors } = useTheme();
 
   return (
@@ -22,7 +21,7 @@ export function CoachEntryCard({ suggestion, onOpenCoach }: CoachEntryCardProps)
         </Text>
       </View>
       <Text variant="headline" style={[styles.suggestion, { color: colors.onPrimaryContainer }]}>
-        {suggestion}
+        Think out loud about your goals. Your coach is here when you are ready.
       </Text>
       <Button label="Talk it through" icon="coach" onPress={onOpenCoach} />
     </Card>
