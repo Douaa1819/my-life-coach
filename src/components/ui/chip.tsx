@@ -42,7 +42,5 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.xxs,
     borderRadius: radius.pill,
   },
-  label: {
-    fontWeight: '600',
-  },
+  label: {},
 });

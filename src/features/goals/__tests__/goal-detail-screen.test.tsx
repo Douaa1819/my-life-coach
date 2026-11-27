@@ -1,6 +1,7 @@
 import { screen, userEvent } from '@testing-library/react-native';
 import { Alert } from 'react-native';
 
+import { useCelebration } from '@/features/celebration/celebration-store';
 import { renderWithProviders } from '@/test/render';
 
 import { GoalDetailScreen } from '../screens/goal-detail-screen';
@@ -69,7 +70,21 @@ describe('GoalDetailScreen', () => {
     const user = userEvent.setup();
     await renderWithProviders(<GoalDetailScreen goalId="bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb" />);
     await user.press(screen.getByRole('button', { name: 'Mark as reached' }));
-    expect(mockMutateStatus).toHaveBeenCalledWith('completed');
+    expect(mockMutateStatus).toHaveBeenCalledWith('completed', expect.any(Object));
+  });
+
+  test('celebrates once a goal is marked reached, and not for other changes', async () => {
+    const user = userEvent.setup();
+    useCelebration.getState().dismiss();
+    await renderWithProviders(<GoalDetailScreen goalId="bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb" />);
+
+    await user.press(screen.getByRole('button', { name: 'Pause' }));
+    mockMutateStatus.mock.calls[0][1].onSuccess();
+    expect(useCelebration.getState().goalTitle).toBeNull();
+
+    await user.press(screen.getByRole('button', { name: 'Mark as reached' }));
+    mockMutateStatus.mock.calls[1][1].onSuccess();
+    expect(useCelebration.getState().goalTitle).toBe('Run a 10 km race');
   });
 
   test('asks before deleting', async () => {

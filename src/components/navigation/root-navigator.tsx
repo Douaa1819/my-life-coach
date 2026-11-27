@@ -7,6 +7,7 @@ import { typography, useTheme } from '@/design';
 import { getAppRedirect } from '@/features/auth/access';
 import { AccountError } from '@/features/auth/components/account-error';
 import { useAccess } from '@/features/auth/use-access';
+import { GoalReachedHost } from '@/features/celebration/goal-reached-host';
 
 import { rootHref } from './tab-routes';
 
@@ -49,7 +50,7 @@ export function RootNavigator() {
             headerShadowVisible: false,
             headerStyle: { backgroundColor: colors.background },
             headerTintColor: colors.text,
-            headerTitleStyle: { fontWeight: typography.headline.fontWeight },
+            headerTitleStyle: { fontFamily: typography.headline.fontFamily },
             contentStyle: { backgroundColor: colors.background },
           }}>
           <Stack.Protected
@@ -77,6 +78,7 @@ export function RootNavigator() {
           <Stack.Screen name="+not-found" options={{ title: 'Not found' }} />
         </Stack>
       </View>
+      {access === 'app' && <GoalReachedHost />}
       {showLoader && (
         <View style={[StyleSheet.absoluteFill, { backgroundColor: colors.background }]}>
           <LoadingState label="Restoring your session" />

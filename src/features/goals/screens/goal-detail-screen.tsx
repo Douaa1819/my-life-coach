@@ -12,6 +12,7 @@ import {
   Text,
 } from '@/components/ui';
 import { radius, spacing, useTheme } from '@/design';
+import { useCelebration } from '@/features/celebration/celebration-store';
 
 import { confirmGoalChange } from '../confirm-goal-change';
 import { leaveScreen } from '../leave-screen';
@@ -53,8 +54,14 @@ function GoalDetailBody({ goal }: { goal: Goal }) {
   const deadline = formatGoalDeadline(goal.targetDate, goal.status);
   const busy = statusMutation.isPending || deleteMutation.isPending;
 
+  const celebrate = useCelebration((state) => state.celebrate);
+
   function setStatus(status: Goal['status']) {
-    statusMutation.mutate(status);
+    statusMutation.mutate(status, {
+      onSuccess: () => {
+        if (status === 'completed') celebrate(goal.title);
+      },
+    });
   }
 
   return (

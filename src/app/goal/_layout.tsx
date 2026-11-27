@@ -11,7 +11,7 @@ export default function GoalLayout() {
         headerShadowVisible: false,
         headerStyle: { backgroundColor: colors.background },
         headerTintColor: colors.text,
-        headerTitleStyle: { fontWeight: typography.headline.fontWeight },
+        headerTitleStyle: { fontFamily: typography.headline.fontFamily },
         contentStyle: { backgroundColor: colors.background },
       }}>
       <Stack.Screen name="new" options={{ title: 'New goal' }} />

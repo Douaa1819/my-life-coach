@@ -9,13 +9,17 @@ type ProgressBarProps = {
   value: number;
   label: string;
   height?: number;
+  /** `success` is for completed work: a mint track with a green fill. */
+  tone?: 'brand' | 'success';
 };
 
-export function ProgressBar({ value, label, height = 8 }: ProgressBarProps) {
+export function ProgressBar({ value, label, height = 8, tone = 'brand' }: ProgressBarProps) {
   const { colors } = useTheme();
   const clamped = Number.isFinite(value) ? Math.min(Math.max(value, 0), 1) : 0;
   const percent = Math.round(clamped * 100);
-  const fillColor = clamped === 1 ? colors.success : colors.brand;
+  const isSuccess = tone === 'success';
+  const fillColor = isSuccess ? colors.successFill : clamped === 1 ? colors.success : colors.brand;
+  const trackColor = isSuccess ? colors.successContainer : colors.surfaceMuted;
 
   const progress = useSharedValue(clamped);
   const trackWidth = useSharedValue(0);
@@ -46,7 +50,7 @@ export function ProgressBar({ value, label, height = 8 }: ProgressBarProps) {
       aria-valuemax={100}
       aria-valuenow={percent}
       onLayout={onLayout}
-      style={[styles.track, { height, backgroundColor: colors.surfaceMuted }]}>
+      style={[styles.track, { height, backgroundColor: trackColor }]}>
       <Animated.View style={[styles.fill, { backgroundColor: fillColor }, fillStyle]} />
     </View>
   );

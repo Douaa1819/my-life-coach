@@ -31,17 +31,16 @@ export function Card({
   accessibilityLabel,
   accessibilityHint,
 }: CardProps) {
-  const { colors, shadows } = useTheme();
+  const { colors } = useTheme();
   const press = usePressFeedback(motion.cardPressedScale);
 
   const toneStyle: ViewStyle = {
     surface: {
       backgroundColor: colors.surface,
       borderColor: colors.border,
-      boxShadow: shadows.card,
     },
     muted: { backgroundColor: colors.surfaceMuted, borderColor: 'transparent' },
-    primary: { backgroundColor: colors.primaryContainer, borderColor: 'transparent' },
+    primary: { backgroundColor: colors.primaryContainer, borderColor: colors.primaryBorder },
     accent: { backgroundColor: colors.accentContainer, borderColor: 'transparent' },
   }[tone];
 
@@ -74,7 +73,7 @@ export function Card({
 const styles = StyleSheet.create({
   base: {
     borderRadius: radius.card,
-    borderWidth: 1,
+    borderWidth: 2,
     overflow: 'hidden',
   },
 });

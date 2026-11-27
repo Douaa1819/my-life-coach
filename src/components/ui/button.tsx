@@ -1,12 +1,24 @@
 import { ActivityIndicator, Pressable, StyleSheet, View } from 'react-native';
 import Animated from 'react-native-reanimated';
 
-import { layout, motion, radius, spacing, type Theme, usePressFeedback, useTheme } from '@/design';
+import {
+  layout,
+  motion,
+  radius,
+  spacing,
+  type Theme,
+  useMotionPreference,
+  usePressFeedback,
+  useTheme,
+} from '@/design';
 
 import { Icon, type IconName } from './icon';
 import { Text } from './text';
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
+
+/** Height of the solid base under a pressable button. */
+const EDGE = 4;
 
 type ButtonVariant = 'primary' | 'secondary' | 'tonal' | 'ghost' | 'destructive';
 
@@ -24,6 +36,7 @@ export type ButtonProps = {
   accessibilityHint?: string;
 };
 
+/** `edge` is the solid base under a pressable button; variants without one press by scaling. */
 function variantColors(variant: ButtonVariant, colors: Theme['colors']) {
   switch (variant) {
     case 'primary':
@@ -32,13 +45,15 @@ function variantColors(variant: ButtonVariant, colors: Theme['colors']) {
         pressed: colors.primaryPressed,
         foreground: colors.onPrimary,
         border: 'transparent',
+        edge: colors.primaryEdge,
       };
     case 'secondary':
       return {
         background: colors.surface,
         pressed: colors.surfaceMuted,
-        foreground: colors.text,
+        foreground: colors.primary,
         border: colors.border,
+        edge: colors.border,
       };
     case 'tonal':
       return {
@@ -46,6 +61,7 @@ function variantColors(variant: ButtonVariant, colors: Theme['colors']) {
         pressed: colors.primaryContainer,
         foreground: colors.onPrimaryContainer,
         border: 'transparent',
+        edge: undefined,
       };
     case 'ghost':
       return {
@@ -53,6 +69,7 @@ function variantColors(variant: ButtonVariant, colors: Theme['colors']) {
         pressed: colors.primaryContainer,
         foreground: colors.primary,
         border: 'transparent',
+        edge: undefined,
       };
     case 'destructive':
       return {
@@ -60,6 +77,7 @@ function variantColors(variant: ButtonVariant, colors: Theme['colors']) {
         pressed: colors.danger,
         foreground: colors.onDanger,
         border: 'transparent',
+        edge: colors.dangerEdge,
       };
   }
 }
@@ -80,8 +98,19 @@ export function Button({
   const palette = variantColors(variant, colors);
   const isInactive = disabled || loading;
   const isLarge = size === 'lg';
-  const press = usePressFeedback(motion.pressedScale);
+  const { reduceMotion } = useMotionPreference();
+  const edge = palette.edge;
+  // Edged buttons press down into their base instead of scaling.
+  const press = usePressFeedback(edge ? 1 : motion.pressedScale);
   const showPressed = press.pressed && !isInactive;
+  const edgeStyle = edge
+    ? showPressed && !reduceMotion
+      ? { borderBottomWidth: 0, marginTop: EDGE }
+      : {
+          borderBottomWidth: EDGE,
+          borderBottomColor: showPressed ? palette.pressed : edge,
+        }
+    : undefined;
 
   return (
     <AnimatedPressable
@@ -103,6 +132,7 @@ export function Button({
           backgroundColor: showPressed ? palette.pressed : palette.background,
           borderColor: palette.border,
         },
+        edgeStyle,
         disabled && styles.disabled,
         press.animatedStyle,
       ]}>
@@ -126,7 +156,7 @@ export function Button({
 const styles = StyleSheet.create({
   base: {
     borderRadius: radius.button,
-    borderWidth: 1,
+    borderWidth: 2,
     overflow: 'hidden',
     justifyContent: 'center',
     alignItems: 'center',

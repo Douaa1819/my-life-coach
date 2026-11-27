@@ -20,19 +20,27 @@ const light = {
   brand: '#7968E8',
   primary: '#5B4BC4',
   primaryPressed: '#4A3DB0',
+  /** The solid 4px base under a pressable button. */
+  primaryEdge: '#3E3291',
   onPrimary: '#FFFFFF',
   primaryContainer: '#F0EDFF',
+  primaryBorder: '#E3DEFA',
   onPrimaryContainer: '#3E3291',
   accent: '#F5B8A8',
   accentContainer: '#FDEDE8',
   onAccentContainer: '#8A4A38',
   success: '#238B69',
+  /** Soft green for graphics only (bars, confetti): 1.9:1 on its track, so a tick or words always sit beside it. */
+  successFill: '#4FC38E',
+  /** Checkbox fill: white tick on it is 3.9:1. */
+  successCheck: '#2E9E6E',
   successContainer: '#E3F4EC',
   successText: '#1E7A5C',
   warning: '#C8872B',
   warningContainer: '#FBF0DE',
   warningText: '#8A5A12',
   danger: '#B23A52',
+  dangerEdge: '#8E2C40',
   onDanger: '#FFFFFF',
   dangerIcon: '#D85B70',
   dangerContainer: '#FBE6EA',
@@ -59,19 +67,24 @@ const dark: ColorTokens = {
   brand: '#A99DF7',
   primary: '#A99DF7',
   primaryPressed: '#BDB3FA',
+  primaryEdge: '#7C6FD8',
   onPrimary: '#15122E',
   primaryContainer: '#2D2754',
+  primaryBorder: '#3A3558',
   onPrimaryContainer: '#E6E1FF',
   accent: '#F5B8A8',
   accentContainer: '#3A2A2E',
   onAccentContainer: '#F5B8A8',
   success: '#6FD1AE',
+  successFill: '#5CCB9C',
+  successCheck: '#3FAF84',
   successContainer: '#16302A',
   successText: '#6FD1AE',
   warning: '#EDB761',
   warningContainer: '#352A16',
   warningText: '#EDB761',
   danger: '#F2899C',
+  dangerEdge: '#B8586C',
   onDanger: '#1C1A2C',
   dangerIcon: '#F2899C',
   dangerContainer: '#3A1E27',
@@ -110,24 +123,35 @@ export const radius = {
   pill: 999,
 } as const;
 
-const fontFamily = Platform.select({ ios: 'System', android: 'sans-serif', default: undefined });
+/**
+ * Nunito (rounded, friendly). React Native cannot pick a weight from a custom font,
+ * so each weight is its own family; the names match @expo-google-fonts/nunito.
+ * Until the fonts load, and if they fail to, the system font is used.
+ */
+export const fontFamilies = {
+  regular: 'Nunito_600SemiBold',
+  medium: 'Nunito_700Bold',
+  bold: 'Nunito_800ExtraBold',
+} as const;
+
+const system = Platform.select({ ios: 'System', android: 'sans-serif', default: undefined });
+export const systemFontFamily = system;
 
 /** Tracking tightens as size grows; small text gets a little extra room. */
 export const typography = {
-  display: { fontFamily, fontSize: 32, lineHeight: 40, fontWeight: '600', letterSpacing: -0.5 },
-  title: { fontFamily, fontSize: 26, lineHeight: 32, fontWeight: '600', letterSpacing: -0.3 },
-  headline: { fontFamily, fontSize: 20, lineHeight: 26, fontWeight: '600', letterSpacing: -0.1 },
-  body: { fontFamily, fontSize: 16, lineHeight: 24, fontWeight: '400' },
-  bodyStrong: { fontFamily, fontSize: 16, lineHeight: 24, fontWeight: '600' },
-  bodySmall: { fontFamily, fontSize: 14, lineHeight: 20, fontWeight: '400', letterSpacing: 0.1 },
-  label: { fontFamily, fontSize: 15, lineHeight: 20, fontWeight: '600', letterSpacing: 0.1 },
-  labelLarge: { fontFamily, fontSize: 16, lineHeight: 22, fontWeight: '600' },
-  caption: { fontFamily, fontSize: 12, lineHeight: 16, fontWeight: '400', letterSpacing: 0.2 },
+  display: { fontFamily: fontFamilies.bold, fontSize: 30, lineHeight: 36, letterSpacing: -0.5 },
+  title: { fontFamily: fontFamilies.bold, fontSize: 26, lineHeight: 32, letterSpacing: -0.3 },
+  headline: { fontFamily: fontFamilies.bold, fontSize: 20, lineHeight: 26, letterSpacing: -0.1 },
+  body: { fontFamily: fontFamilies.regular, fontSize: 16, lineHeight: 24 },
+  bodyStrong: { fontFamily: fontFamilies.bold, fontSize: 16, lineHeight: 24 },
+  bodySmall: { fontFamily: fontFamilies.regular, fontSize: 14, lineHeight: 20, letterSpacing: 0.1 },
+  label: { fontFamily: fontFamilies.medium, fontSize: 15, lineHeight: 20, letterSpacing: 0.1 },
+  labelLarge: { fontFamily: fontFamilies.bold, fontSize: 16, lineHeight: 22 },
+  caption: { fontFamily: fontFamilies.medium, fontSize: 12, lineHeight: 16, letterSpacing: 0.2 },
   overline: {
-    fontFamily,
+    fontFamily: fontFamilies.bold,
     fontSize: 12,
     lineHeight: 16,
-    fontWeight: '600',
     letterSpacing: 0.8,
     textTransform: 'uppercase',
   },

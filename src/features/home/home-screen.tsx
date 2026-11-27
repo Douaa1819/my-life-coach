@@ -1,32 +1,81 @@
 import { router } from 'expo-router';
 import { useMemo } from 'react';
-import { RefreshControl } from 'react-native';
+import { RefreshControl, StyleSheet, View } from 'react-native';
 
-import { Screen } from '@/components/ui';
-import { useTheme } from '@/design';
+import { Button, Card, Screen, Text } from '@/components/ui';
+import { spacing, useTheme } from '@/design';
 import { goalHrefs } from '@/features/goals/goal-routes';
+import { isFocusGoal } from '@/features/goals/goal-progress';
 import { useGoals } from '@/features/goals/use-goals';
 import { useProfile } from '@/features/profile/use-profile';
 
-import { CoachEntryCard } from './components/coach-entry-card';
-import { GoalsPreview } from './components/goals-preview';
-import { GoalsSummaryCard } from './components/goals-summary-card';
+import { FocusCard } from './components/focus-card';
+import { GoalsSection } from './components/goals-section';
 import { HomeHeader } from './components/home-header';
 import { MissionsPlaceholder } from './components/missions-placeholder';
+import { TodayEmpty, TodayError, TodaySkeleton } from './components/today-states';
 import { formatTodayLabel, getGreeting } from './greeting';
+
+const OTHER_GOALS_LIMIT = 3;
 
 export function HomeScreen({ now = new Date() }: { now?: Date }) {
   const { colors } = useTheme();
   const profile = useProfile();
   const goals = useGoals();
 
-  const counts = useMemo(() => {
-    const list = goals.data ?? [];
+  const summary = useMemo(() => {
+    const counted = (goals.data ?? []).filter((goal) => goal.status !== 'archived');
+    const inFocus = counted.filter(isFocusGoal);
+    // An active goal leads; a paused one only if nothing is active.
+    const lead = inFocus.find((goal) => goal.status === 'active') ?? inFocus[0];
     return {
-      active: list.filter((goal) => goal.status === 'active').length,
-      completed: list.filter((goal) => goal.status === 'completed').length,
+      total: counted.length,
+      reached: counted.filter((goal) => goal.status === 'completed').length,
+      lead,
+      others: inFocus.filter((goal) => goal !== lead).slice(0, OTHER_GOALS_LIMIT),
     };
   }, [goals.data]);
+
+  const { lead } = summary;
+  const addGoal = () => router.push(goalHrefs.create);
+
+  let body;
+  if (goals.isPending) {
+    body = <TodaySkeleton />;
+  } else if (goals.isError) {
+    body = <TodayError onRetry={() => void goals.refetch()} />;
+  } else if (summary.total === 0) {
+    body = <TodayEmpty onAdd={addGoal} />;
+  } else {
+    body = (
+      <>
+        {lead ? (
+          <FocusCard
+            goal={lead}
+            onOpenGoal={() => router.push(goalHrefs.detail(lead.id))}
+            onOpenCoach={() => router.navigate('/coach')}
+          />
+        ) : (
+          <Card tone="primary">
+            <View style={styles.next}>
+              <Text variant="title">Ready for the next one?</Text>
+              <Text>Every goal on your list is reached or archived. Pick what comes next.</Text>
+              <Button label="Add a goal" size="lg" fullWidth onPress={addGoal} />
+            </View>
+          </Card>
+        )}
+        <MissionsPlaceholder />
+        <GoalsSection
+          goals={summary.others}
+          reached={summary.reached}
+          total={summary.total}
+          onSeeAll={() => router.navigate('/goals')}
+          onOpenGoal={(goalId) => router.push(goalHrefs.detail(goalId))}
+          onAdd={addGoal}
+        />
+      </>
+    );
+  }
 
   return (
     <Screen
@@ -46,25 +95,13 @@ export function HomeScreen({ now = new Date() }: { now?: Date }) {
         firstName={profile.data?.displayName ?? null}
         dateLabel={formatTodayLabel(now)}
       />
-      {goals.data && (
-        <GoalsSummaryCard
-          active={counts.active}
-          completed={counts.completed}
-          onPress={() => router.navigate('/goals')}
-        />
-      )}
-      <MissionsPlaceholder />
-      <CoachEntryCard onOpenCoach={() => router.navigate('/coach')} />
-      <GoalsPreview
-        goals={goals.data}
-        isPending={goals.isPending}
-        isError={goals.isError}
-        error={goals.error}
-        onSeeAll={() => router.navigate('/goals')}
-        onOpenGoal={(goalId) => router.push(goalHrefs.detail(goalId))}
-        onRetry={() => void goals.refetch()}
-        onAdd={() => router.push(goalHrefs.create)}
-      />
+      {body}
     </Screen>
   );
 }
+
+const styles = StyleSheet.create({
+  next: {
+    gap: spacing.md,
+  },
+});

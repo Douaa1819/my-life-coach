@@ -27,8 +27,8 @@ afterEach(() => {
 });
 
 describe('press feedback', () => {
-  test('button springs to 0.97 on press-in and back to 1 on release', async () => {
-    await renderWithProviders(<Button label="Continue" onPress={jest.fn()} />);
+  test('flat button springs to 0.97 on press-in and back to 1 on release', async () => {
+    await renderWithProviders(<Button label="Continue" variant="tonal" onPress={jest.fn()} />);
     const button = screen.getByRole('button', { name: 'Continue' });
 
     await fireEvent(button, 'pressIn');
@@ -38,6 +38,31 @@ describe('press feedback', () => {
     await fireEvent(button, 'pressOut');
     await settle();
     expect(button).toHaveAnimatedStyle({ transform: [{ scale: 1 }] });
+  });
+
+  test('edged button presses down into its base instead of scaling', async () => {
+    await renderWithProviders(<Button label="Continue" onPress={jest.fn()} />);
+    const button = screen.getByRole('button', { name: 'Continue' });
+
+    await fireEvent(button, 'pressIn');
+    await settle();
+    expect(button).toHaveAnimatedStyle({ transform: [{ scale: 1 }] });
+    expect(button).toHaveStyle({ borderBottomWidth: 0, marginTop: 4 });
+
+    await fireEvent(button, 'pressOut');
+    await settle();
+    expect(button).toHaveStyle({ borderBottomWidth: 4 });
+  });
+
+  test('edged button only dims its base under reduced motion', async () => {
+    mockReduceMotion = true;
+    await renderWithProviders(<Button label="Continue" onPress={jest.fn()} />);
+    const button = screen.getByRole('button', { name: 'Continue' });
+
+    await fireEvent(button, 'pressIn');
+    await settle();
+    expect(button).toHaveStyle({ borderBottomWidth: 4 });
+    expect(button).not.toHaveStyle({ marginTop: 4 });
   });
 
   test('pressable card springs to 0.98', async () => {

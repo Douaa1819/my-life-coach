@@ -20,12 +20,8 @@ function TabButton({ label, icon, isFocused, ref, ...props }: TabButtonProps) {
       {...props}
       aria-label={label}
       style={[styles.tab, isFocused && { backgroundColor: colors.primaryContainer }]}>
-      <Icon
-        name={icon}
-        size={20}
-        color={isFocused ? colors.onPrimaryContainer : colors.textSecondary}
-      />
-      <Text variant="caption" color={isFocused ? 'text' : 'textSecondary'}>
+      <Icon name={icon} size={26} color={isFocused ? colors.primary : colors.textSecondary} />
+      <Text variant="caption" color={isFocused ? 'primary' : 'textSecondary'}>
         {label}
       </Text>
     </Pressable>
@@ -65,10 +61,12 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     gap: spacing.xs,
     paddingVertical: spacing.xs,
-    borderTopWidth: StyleSheet.hairlineWidth,
+    paddingHorizontal: spacing.xs,
+    borderTopWidth: 2,
   },
   tab: {
-    minWidth: 72,
+    flex: 1,
+    maxWidth: 120,
     minHeight: layout.minTouchTarget + spacing.sm,
     alignItems: 'center',
     justifyContent: 'center',
