@@ -21,7 +21,7 @@ describe('playSound', () => {
 
   test('plays the requested sound when sound is on', () => {
     playSound('goalReached');
-    expect(mockPlay).toHaveBeenCalledWith(sounds.goalReached, expect.any(Number));
+    expect(mockPlay).toHaveBeenCalledWith(sounds.goalReached, expect.any(Number), 'goalReached');
   });
 
   test('stays silent when the person turned sound off', () => {

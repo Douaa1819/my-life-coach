@@ -63,6 +63,9 @@ describe('Pebble', () => {
     ['grow', 'pebble-eye'],
     ['rest', 'pebble-eye-closed'],
     ['celebrate', 'pebble-eye-happy'],
+    ['proud', 'pebble-eye'],
+    ['thinking', 'pebble-eye'],
+    ['sleepy', 'pebble-eye-sleepy'],
   ] as const)('the %s mood shows its eyes', async (mood, eyes) => {
     await renderWithProviders(<Pebble mood={mood} />);
     expect(screen.getAllByTestId(eyes, hidden)).toHaveLength(2);

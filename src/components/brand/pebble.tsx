@@ -14,7 +14,8 @@ import { type ColorSchemeName, springTo, timingTo, useMotionPreference, useTheme
  * Pebble expresses state through posture and eyes only (docs/DESIGN_SYSTEM.md 6.1):
  * leaning forward to encourage, stretching taller to grow, resting flat, hopping to celebrate.
  */
-export type PebbleMood = 'idle' | 'encourage' | 'grow' | 'rest' | 'celebrate';
+export type PebbleMood =
+  'idle' | 'encourage' | 'grow' | 'rest' | 'celebrate' | 'proud' | 'thinking' | 'sleepy';
 
 type PebbleProps = {
   /** Width and height of the drawing box, in dp. Works from 28 (avatar) to 240. */
@@ -36,6 +37,12 @@ const postures: Record<PebbleMood, Posture> = {
   grow: { rotate: 0, scaleX: 0.94, scaleY: 1.1, lookX: 0, lookY: -0.04 },
   rest: { rotate: 0, scaleX: 1.1, scaleY: 0.84, lookX: 0, lookY: 0.02 },
   celebrate: { rotate: 0, scaleX: 1, scaleY: 1, lookX: 0, lookY: 0 },
+  // Proud: stands tall and still, chin up, looking just above you.
+  proud: { rotate: 0, scaleX: 0.97, scaleY: 1.07, lookX: 0, lookY: -0.05 },
+  // Thinking: head tilts away and eyes drift up and to the side.
+  thinking: { rotate: -6, scaleX: 1, scaleY: 1, lookX: 0.07, lookY: -0.07 },
+  // Sleepy: settles low and wide, lids half closed.
+  sleepy: { rotate: -3, scaleX: 1.07, scaleY: 0.88, lookX: 0, lookY: 0.04 },
 };
 
 /** Illustration palette (6.2): dark mode keeps Pebble light on ink, never neon. */
@@ -143,7 +150,8 @@ function PebbleView({
     ? ({ accessible: true, role: 'img', 'aria-label': accessibilityLabel } as const)
     : ({ 'aria-hidden': true, importantForAccessibility: 'no-hide-descendants' } as const);
 
-  const showCheeks = !spark && (mood === 'celebrate' || mood === 'encourage') && size >= 40;
+  const showCheeks =
+    !spark && (mood === 'celebrate' || mood === 'encourage' || mood === 'proud') && size >= 40;
 
   return (
     <View testID="pebble" style={{ width: size, height: size }} {...a11y}>
@@ -260,6 +268,22 @@ function Eye({
           width: size * 1.3,
           height: Math.max(1.5, size * 0.28),
           borderRadius: size,
+          backgroundColor: color,
+        }}
+      />
+    );
+  }
+
+  if (mood === 'sleepy') {
+    // Half-closed lid: the lower half of an eye under a flat top.
+    return (
+      <View
+        testID="pebble-eye-sleepy"
+        style={{
+          width: size * 1.1,
+          height: size * 0.62,
+          borderBottomLeftRadius: size,
+          borderBottomRightRadius: size,
           backgroundColor: color,
         }}
       />

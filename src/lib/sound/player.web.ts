@@ -1,4 +1,4 @@
-import { type Note } from './sounds';
+import { type Note, type SoundName } from './sounds';
 
 let context: AudioContext | undefined;
 
@@ -18,7 +18,11 @@ function getContext(): AudioContext | undefined {
  * Web Audio plays only after a tap or key press; before that the browser keeps the
  * context suspended and the sound is simply skipped. Never throws.
  */
-export async function playNotes(notes: readonly Note[], volume: number): Promise<void> {
+export async function playNotes(
+  notes: readonly Note[],
+  volume: number,
+  _name?: SoundName,
+): Promise<void> {
   try {
     const audio = getContext();
     if (!audio) return;

@@ -4,6 +4,7 @@ import Animated, { useAnimatedStyle, useSharedValue } from 'react-native-reanima
 
 import { springTo, timingTo, useMotionPreference, useTheme } from '@/design';
 import { playSound } from '@/lib/sound/play-sound';
+import { vibrate } from '@/lib/vibration/vibrate';
 
 import { Icon } from './icon';
 
@@ -66,7 +67,10 @@ export function AnimatedCheck({
   function toggle() {
     const next = !checked;
     onChange(next);
-    if (next && sound) playSound('taskDone');
+    if (next && sound) {
+      playSound('taskDone');
+      vibrate('taskDone');
+    }
   }
 
   return (

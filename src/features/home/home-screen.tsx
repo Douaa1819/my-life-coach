@@ -2,6 +2,7 @@ import { router } from 'expo-router';
 import { useMemo } from 'react';
 import { RefreshControl, StyleSheet, View } from 'react-native';
 
+import { Pebble } from '@/components/brand';
 import { Button, Card, Screen, Text } from '@/components/ui';
 import { spacing, useTheme } from '@/design';
 import { goalHrefs } from '@/features/goals/goal-routes';
@@ -58,6 +59,7 @@ export function HomeScreen({ now = new Date() }: { now?: Date }) {
         ) : (
           <Card tone="primary">
             <View style={styles.next}>
+              <Pebble size={96} mood="proud" />
               <Text variant="title">Ready for the next one?</Text>
               <Text>Every goal on your list is reached or archived. Pick what comes next.</Text>
               <Button label="Add a goal" size="lg" fullWidth onPress={addGoal} />

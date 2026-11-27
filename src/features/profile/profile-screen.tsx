@@ -17,7 +17,7 @@ import { useZodForm } from '@/lib/forms/use-zod-form';
 import { DataAccessError } from '@/lib/supabase/data-access-error';
 
 import { DISPLAY_NAME_MAX_LENGTH, type Profile, profileUpdateSchema } from './profile.schema';
-import { SoundSetting } from './sound-setting';
+import { SoundSetting, VibrationSetting } from './sound-setting';
 import { useProfile, useUpdateProfile } from './use-profile';
 
 function saveErrorMessage(error: unknown) {
@@ -151,7 +151,10 @@ export function ProfileScreen() {
       </Card>
 
       <Card>
-        <SoundSetting />
+        <View style={{ gap: spacing.lg }}>
+          <SoundSetting />
+          <VibrationSetting />
+        </View>
       </Card>
 
       <Text variant="caption" color="textSecondary">

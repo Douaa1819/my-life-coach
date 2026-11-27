@@ -12,6 +12,7 @@ import { publicEnvResult } from '@/config/public-env';
 import { useTheme } from '@/design';
 import { AuthProvider } from '@/features/auth/auth-provider';
 import { useSoundPreference } from '@/lib/sound/sound-preference';
+import { useVibrationPreference } from '@/lib/vibration/vibration-preference';
 import { AppProviders } from '@/providers/app-providers';
 
 // Kept visible until the stored session has been restored, so no screen flashes.
@@ -28,6 +29,7 @@ export default function RootLayout() {
   // The saved sound choice must be known before any screen can play a sound.
   useEffect(() => {
     void useSoundPreference.getState().hydrate();
+    void useVibrationPreference.getState().hydrate();
   }, []);
 
   if (!publicEnvResult.success) SplashScreen.hide();

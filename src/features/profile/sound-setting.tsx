@@ -4,13 +4,41 @@ import { StyleSheet, Switch, View } from 'react-native';
 import { Text } from '@/components/ui';
 import { spacing, useTheme } from '@/design';
 import { useSoundPreference } from '@/lib/sound/sound-preference';
+import { useVibrationPreference } from '@/lib/vibration/vibration-preference';
+
+type SwitchRowProps = {
+  label: string;
+  description: string;
+  enabled: boolean;
+  onChange: (enabled: boolean) => void;
+};
+
+function SwitchRow({ label, description, enabled, onChange }: SwitchRowProps) {
+  const { colors } = useTheme();
+  return (
+    <View style={styles.row}>
+      <View style={styles.copy}>
+        <Text variant="bodyStrong">{label}</Text>
+        <Text variant="caption" color="textSecondary">
+          {description}
+        </Text>
+      </View>
+      <Switch
+        value={enabled}
+        onValueChange={onChange}
+        aria-label={label}
+        trackColor={{ true: colors.successCheck, false: colors.border }}
+        thumbColor={colors.surface}
+      />
+    </View>
+  );
+}
 
 /**
  * Turns the short completion and celebration sounds on or off. Off removes nothing else:
  * every message a sound carries is also shown on screen. A device in silent mode stays silent.
  */
 export function SoundSetting() {
-  const { colors } = useTheme();
   const enabled = useSoundPreference((state) => state.enabled);
   const setEnabled = useSoundPreference((state) => state.setEnabled);
   const hydrate = useSoundPreference((state) => state.hydrate);
@@ -20,21 +48,32 @@ export function SoundSetting() {
   }, [hydrate]);
 
   return (
-    <View style={styles.row}>
-      <View style={styles.copy}>
-        <Text variant="bodyStrong">Sound effects</Text>
-        <Text variant="caption" color="textSecondary">
-          Short sounds when you finish something. Silent mode stays silent.
-        </Text>
-      </View>
-      <Switch
-        value={enabled}
-        onValueChange={setEnabled}
-        aria-label="Sound effects"
-        trackColor={{ true: colors.successCheck, false: colors.border }}
-        thumbColor={colors.surface}
-      />
-    </View>
+    <SwitchRow
+      label="Sound effects"
+      description="Short sounds when you finish something. Silent mode stays silent."
+      enabled={enabled}
+      onChange={setEnabled}
+    />
+  );
+}
+
+/** A light buzz on completions. Off by default; it does nothing on the web. */
+export function VibrationSetting() {
+  const enabled = useVibrationPreference((state) => state.enabled);
+  const setEnabled = useVibrationPreference((state) => state.setEnabled);
+  const hydrate = useVibrationPreference((state) => state.hydrate);
+
+  useEffect(() => {
+    void hydrate();
+  }, [hydrate]);
+
+  return (
+    <SwitchRow
+      label="Vibration"
+      description="A light buzz when you finish something."
+      enabled={enabled}
+      onChange={setEnabled}
+    />
   );
 }
 

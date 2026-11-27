@@ -1,7 +1,13 @@
-import { type AndroidSymbol, type SFSymbol, SymbolView } from 'expo-symbols';
+import { type AndroidSymbol, type SFSymbol } from 'expo-symbols';
 import { type ColorValue } from 'react-native';
+import Svg, { Path } from 'react-native-svg';
 
-/** Each icon maps to an SF Symbol (iOS) and a Material Symbol (Android and web). */
+import { iconPaths } from './icon-paths';
+
+/**
+ * Each icon maps to an SF Symbol (iOS) and a Material Symbol (Android). The native tab bar
+ * has to use these system symbols; everywhere else the drawn family in icon-paths.ts is used.
+ */
 export const iconMap = {
   home: { ios: 'house', android: 'home' },
   goals: { ios: 'flag', android: 'flag' },
@@ -45,14 +51,16 @@ type IconProps = {
 
 /** Decorative by default: pair it with visible text or an aria-label on the parent. */
 export function Icon({ name, size = 20, color }: IconProps) {
-  const symbol = iconMap[name];
   return (
-    <SymbolView
-      name={{ ios: symbol.ios, android: symbol.android, web: symbol.android }}
-      size={size}
-      tintColor={color}
-      aria-hidden
-      importantForAccessibility="no-hide-descendants"
-    />
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none" aria-hidden>
+      <Path
+        d={iconPaths[name]}
+        stroke={color as string}
+        // Small icons get a touch more weight so they do not look thin.
+        strokeWidth={size < 20 ? 2.6 : 2.2}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </Svg>
   );
 }

@@ -1,21 +1,24 @@
 import * as SecureStore from 'expo-secure-store';
 
-const KEY = 'aicoach.sound-effects';
+const SOUND_KEY = 'aicoach.sound-effects';
 
-/** A device setting, not personal data. Every failure resolves quietly. */
-export async function loadSoundEnabled(): Promise<boolean | null> {
+/** Device settings, not personal data. Every failure resolves quietly. */
+export async function loadFlag(key: string): Promise<boolean | null> {
   try {
-    const value = await SecureStore.getItemAsync(KEY);
+    const value = await SecureStore.getItemAsync(key);
     return value === 'on' ? true : value === 'off' ? false : null;
   } catch {
     return null;
   }
 }
 
-export async function saveSoundEnabled(enabled: boolean): Promise<void> {
+export async function saveFlag(key: string, enabled: boolean): Promise<void> {
   try {
-    await SecureStore.setItemAsync(KEY, enabled ? 'on' : 'off');
+    await SecureStore.setItemAsync(key, enabled ? 'on' : 'off');
   } catch {
     // The choice still applies for this session.
   }
 }
+
+export const loadSoundEnabled = () => loadFlag(SOUND_KEY);
+export const saveSoundEnabled = (enabled: boolean) => saveFlag(SOUND_KEY, enabled);

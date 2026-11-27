@@ -6,6 +6,7 @@ import { Pebble } from '@/components/brand';
 import { Button, Icon, Text } from '@/components/ui';
 import { fadeTo, layout, radius, spacing, timingTo, useTheme } from '@/design';
 import { playSound } from '@/lib/sound/play-sound';
+import { vibrate } from '@/lib/vibration/vibrate';
 
 import { ConfettiDots } from './confetti-dots';
 
@@ -42,6 +43,7 @@ export function GoalReachedSheet({
     sheet.set(fadeTo(1, 'base'));
     rise.set(timingTo(0, 'moderate', 'decelerate'));
     playSound('goalReached');
+    vibrate('goalReached');
   }, [scrim, sheet, rise]);
 
   const scrimStyle = useAnimatedStyle(() => ({ opacity: scrim.get() }));

@@ -12,7 +12,7 @@ export function playSound(name: SoundName, now: number = Date.now()): void {
   if (!useSoundPreference.getState().enabled) return;
   if (now - lastPlayedAt < MIN_GAP_MS) return;
   lastPlayedAt = now;
-  void playNotes(sounds[name], SOUND_VOLUME);
+  void playNotes(sounds[name], SOUND_VOLUME, name);
 }
 
 /** For tests. */
