@@ -66,15 +66,84 @@ Onboarding still writes the first row through `complete_onboarding()`. The goals
 
 **Policies.** `select` / `insert` / `update` / `delete` where `(select auth.uid()) = user_id`.
 
-Home reads the signed-in user's goals (a summary of active and completed counts, plus a preview of active and paused goals). There is no missions or streak table yet: Home shows a "Daily missions are coming soon" placeholder instead of sample data.
+Home reads the signed-in user's goals (a summary of active and completed counts, plus a preview of active and paused goals). Home does not read `plan_items` or `tasks` yet (they exist in the local database only, see below): it shows a "Daily missions are on their way" placeholder instead of sample data. There is no streak table.
 
 ### `complete_onboarding(...)`
 
 `security definer`, `search_path = ''`, `execute` granted to `authenticated` only. Identity is `auth.uid()` (no user-id argument). Validates every field, locks the caller's profile, writes preferences and one goal, sets `profiles.onboarding_completed`. A second call raises `P0001` / `already_completed` and changes nothing.
 
+### `plan_items` and `tasks` (B1: local database only)
+
+> **Deployment status.** Migration `20261127190000_plan_items_and_tasks.sql` has been **applied to the local Supabase stack only** and validated there with pgTAP (`supabase/tests/database/plan_items_and_tasks.test.sql`). It has **not** been applied to any hosted or production project. The app does not read or write these tables yet. Rolling it out needs a separate approval and a dry run first. Design: [BACKEND_PLAN.md](BACKEND_PLAN.md), section 2.
+
+Both tables are additive. No existing table, policy or function changed.
+
+#### `plan_items`
+
+The planning levels between a goal and its daily tasks: 1-year objective, 6-month milestone, monthly, weekly.
+
+| Column                       | Type           | Notes                                                                               |
+| ---------------------------- | -------------- | ----------------------------------------------------------------------------------- |
+| `id`                         | `uuid` PK      | `default gen_random_uuid()`. Clients cannot choose it                               |
+| `user_id`                    | `uuid` FK      | `default auth.uid()`, cascade. Not writable by clients                              |
+| `goal_id`                    | `uuid` FK      | `goals(id)`, cascade. Index `(goal_id)`                                             |
+| `parent_id`                  | `uuid` FK null | Self reference, cascade. Partial index. Null attaches the item straight to the goal |
+| `level`                      | `text`         | `objective_1y`, `milestone_6m`, `monthly`, `weekly`. Fixed after creation           |
+| `title`                      | `text`         | 3–120, trimmed, no control characters                                               |
+| `detail`                     | `text` null    | 1–280, newlines allowed                                                             |
+| `period_start`, `period_end` | `date`         | `period_end >= period_start`. Index `(user_id, level, period_start)`                |
+| `metric_unit`                | `text` null    | 1–20. Set together with `target_value`, or both null                                |
+| `target_value`               | `numeric` null | Greater than 0 and below 1,000,000,000                                              |
+| `status`                     | `text`         | `active` default; `dropped`; `done` and `suggested` are server-only                 |
+| `source`                     | `text`         | `user` default; `rule`, `coach`. Server-only                                        |
+| `created_at`, `updated_at`   | `timestamptz`  | `updated_at` by trigger                                                             |
+
+**Tree rules** (`private.plan_items_check_tree`, a before insert/update trigger that runs as the caller):
+
+- The goal must belong to the same user.
+- When `parent_id` is set, the parent belongs to the same user and goal, sits **exactly one level above**, and its period contains the child's. A parent is optional at every level, so a short goal can hold weekly items directly.
+- `user_id`, `goal_id`, `parent_id` and `level` cannot change after creation.
+- A period edit must stay inside the parent and still contain every child.
+- Clients may only move `status` between `active` and `dropped`.
+- Errors are generic: a missing row and another user's row give the same message.
+
+**Privileges.** `authenticated`: `select`; `insert (goal_id, parent_id, level, title, detail, period_start, period_end, metric_unit, target_value)`; `update (title, detail, period_start, period_end, metric_unit, target_value, status)`; `delete`. `anon`: nothing.
+
+**Policies.** `select`, `insert`, `update` and `delete` where `(select auth.uid()) = user_id`.
+
+#### `tasks`
+
+Daily micro-tasks (called `missions` in the earlier proposal).
+
+| Column                     | Type               | Notes                                                                         |
+| -------------------------- | ------------------ | ----------------------------------------------------------------------------- |
+| `id`                       | `uuid` PK          | Clients cannot choose it                                                      |
+| `user_id`                  | `uuid` FK          | `default auth.uid()`, cascade. Not writable by clients                        |
+| `goal_id`                  | `uuid` FK null     | `goals(id)`, cascade. Filled from the plan item when `plan_item_id` is set    |
+| `plan_item_id`             | `uuid` FK null     | `plan_items(id)`, **set null** on delete: the task stays on its goal          |
+| `task_date`                | `date`             | The person's local date                                                       |
+| `position`                 | `smallint`         | Next free slot of the day, assigned by trigger under a per-user, per-day lock |
+| `title`                    | `text`             | 1–120, trimmed, no control characters                                         |
+| `duration_minutes`         | `smallint`         | 1–240. No default: the app supplies it                                        |
+| `effort`                   | `smallint`         | 1–3. No default: the app supplies it                                          |
+| `source`                   | `text`             | `user` default; `rule`, `coach`. Server-only                                  |
+| `status`                   | `text`             | `pending` default; `completed`, `skipped`. Server-only                        |
+| `completed_at`             | `timestamptz` null | Set exactly when `status = 'completed'`. Server-only                          |
+| `created_at`, `updated_at` | `timestamptz`      | `updated_at` by trigger                                                       |
+
+Unique `(user_id, task_date, position)`; partial indexes on `goal_id` and `plan_item_id`.
+
+**Trigger** (`private.tasks_before_write`, runs as the caller): the linked goal and plan item must belong to the same user, a task's goal must match its plan item's goal, `user_id` cannot change, and `position` is set on insert and whenever `task_date` changes.
+
+**Privileges.** `authenticated`: `select`; `insert (goal_id, plan_item_id, task_date, title, duration_minutes, effort)`; `update (task_date, title, duration_minutes, effort)`; `delete`. `anon`: nothing.
+
+**Policies.** `select` and `insert` on ownership. `update` and `delete` on ownership **and** `status = 'pending'`, so finished tasks are history.
+
+**Not in B1.** Nothing changes `status` yet, so every task stays `pending`: completion is a server function that arrives together with XP (B2). There is no `xp_awarded`, `habit_id`, SMART columns on `goals`, or `discovery_answers`; those belong to later steps in the plan.
+
 ## Proposed (not implemented)
 
-Each table below is user-owned: RLS on, `user_id` owner column, `select` policy on ownership, and writes limited as described. Sizes are starting points. `user_preferences` and `goals` above are already in the database; do not recreate them.
+Each table below is user-owned: RLS on, `user_id` owner column, `select` policy on ownership, and writes limited as described. Sizes are starting points. `user_preferences` and `goals` above are already in the database, and `plan_items` and `tasks` exist in the local database (not hosted); do not recreate them. The detailed plan for the rest is in [BACKEND_PLAN.md](BACKEND_PLAN.md).
 
 ### `milestones`
 
@@ -105,22 +174,7 @@ A trigger checks that `goal_id` belongs to the same `user_id`, so nobody can att
 
 ### `missions`
 
-Daily tasks, generated by the server (rules or AI) and completed by the user.
-
-| Column                | Type               | Notes                                                                       |
-| --------------------- | ------------------ | --------------------------------------------------------------------------- |
-| `id`                  | `uuid` PK          |                                                                             |
-| `user_id`             | `uuid` FK          | Unique `(user_id, mission_date, position)`; index `(user_id, mission_date)` |
-| `goal_id`, `habit_id` | `uuid` FK null     | Same-owner trigger                                                          |
-| `mission_date`        | `date`             | In the user's time zone                                                     |
-| `title`               | `text`             | 1–120                                                                       |
-| `duration_minutes`    | `smallint`         | 1–240                                                                       |
-| `source`              | `text`             | `user`, `rule`, `coach`                                                     |
-| `status`              | `text`             | `pending`, `completed`, `skipped`                                           |
-| `completed_at`        | `timestamptz` null |                                                                             |
-| `xp_awarded`          | `integer`          | Default 0. **Server-only.**                                                 |
-
-Client may insert its own `source = 'user'` missions and update `title`, `duration_minutes`. Completion goes through `private.complete_mission(mission_id)`, which checks ownership and the date window, sets `status` and `completed_at`, computes XP and writes a `progress_records` row in one transaction. `xp_awarded`, `source` and `status` are never granted to clients.
+Replaced by `tasks`, which is implemented locally (see above). Completion, `xp_awarded` and the XP ledger arrive with B2.
 
 ### `progress_records`
 

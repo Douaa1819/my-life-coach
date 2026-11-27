@@ -46,6 +46,76 @@ export type Database = {
         };
         Relationships: [];
       };
+      plan_items: {
+        Row: {
+          created_at: string;
+          detail: string | null;
+          goal_id: string;
+          id: string;
+          level: string;
+          metric_unit: string | null;
+          parent_id: string | null;
+          period_end: string;
+          period_start: string;
+          source: string;
+          status: string;
+          target_value: number | null;
+          title: string;
+          updated_at: string;
+          user_id: string;
+        };
+        ComputedFields: never;
+        Insert: {
+          created_at?: string;
+          detail?: string | null;
+          goal_id: string;
+          id?: string;
+          level: string;
+          metric_unit?: string | null;
+          parent_id?: string | null;
+          period_end: string;
+          period_start: string;
+          source?: string;
+          status?: string;
+          target_value?: number | null;
+          title: string;
+          updated_at?: string;
+          user_id?: string;
+        };
+        Update: {
+          created_at?: string;
+          detail?: string | null;
+          goal_id?: string;
+          id?: string;
+          level?: string;
+          metric_unit?: string | null;
+          parent_id?: string | null;
+          period_end?: string;
+          period_start?: string;
+          source?: string;
+          status?: string;
+          target_value?: number | null;
+          title?: string;
+          updated_at?: string;
+          user_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'plan_items_goal_id_fkey';
+            columns: ['goal_id'];
+            isOneToOne: false;
+            referencedRelation: 'goals';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'plan_items_parent_id_fkey';
+            columns: ['parent_id'];
+            isOneToOne: false;
+            referencedRelation: 'plan_items';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
       profiles: {
         Row: {
           avatar_url: string | null;
@@ -76,6 +146,73 @@ export type Database = {
           updated_at?: string;
         };
         Relationships: [];
+      };
+      tasks: {
+        Row: {
+          completed_at: string | null;
+          created_at: string;
+          duration_minutes: number;
+          effort: number;
+          goal_id: string | null;
+          id: string;
+          plan_item_id: string | null;
+          position: number;
+          source: string;
+          status: string;
+          task_date: string;
+          title: string;
+          updated_at: string;
+          user_id: string;
+        };
+        ComputedFields: never;
+        Insert: {
+          completed_at?: string | null;
+          created_at?: string;
+          duration_minutes: number;
+          effort: number;
+          goal_id?: string | null;
+          id?: string;
+          plan_item_id?: string | null;
+          position?: number;
+          source?: string;
+          status?: string;
+          task_date: string;
+          title: string;
+          updated_at?: string;
+          user_id?: string;
+        };
+        Update: {
+          completed_at?: string | null;
+          created_at?: string;
+          duration_minutes?: number;
+          effort?: number;
+          goal_id?: string | null;
+          id?: string;
+          plan_item_id?: string | null;
+          position?: number;
+          source?: string;
+          status?: string;
+          task_date?: string;
+          title?: string;
+          updated_at?: string;
+          user_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'tasks_goal_id_fkey';
+            columns: ['goal_id'];
+            isOneToOne: false;
+            referencedRelation: 'goals';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'tasks_plan_item_id_fkey';
+            columns: ['plan_item_id'];
+            isOneToOne: false;
+            referencedRelation: 'plan_items';
+            referencedColumns: ['id'];
+          },
+        ];
       };
       user_preferences: {
         Row: {
