@@ -56,6 +56,11 @@ jest.mock('@/features/tasks/components/tasks-section', () => ({
   },
 }));
 
+jest.mock('@/features/checkins/components/checkin-card', () => ({ CheckinCard: () => null }));
+jest.mock('@/features/checkins/components/weekly-review-card', () => ({
+  WeeklyReviewCard: () => null,
+}));
+
 const morning = new Date(2026, 10, 3, 9, 0, 0);
 
 beforeEach(() => {

@@ -190,9 +190,37 @@ XP is decided by the database, never by the app. Clients can read the rules, the
 
 **Privileges.** `authenticated`: `select`, `insert (goal_id, title, cadence, days_of_week, target_per_period, rest_days_per_week)`, `update` of the same plus `is_active`, and `delete` on `habits`; `select` only on `habit_checkins`; `execute` on the three functions. `anon`: nothing. Errors are stable codes raised as `P0001`: `habit_not_found`, `habit_inactive`.
 
+### Check-ins and adaptive planning (B4: local database only)
+
+> **Deployment status.** Migration `20261128140000_checkins_adaptive.sql` is **applied to the local Supabase stack only** and validated with pgTAP (`supabase/tests/database/checkins_adaptive.test.sql`, 73 assertions). It is **not** applied to any hosted or production project. Today uses it. Design: [BACKEND_PLAN.md](BACKEND_PLAN.md), section 5.
+
+| Object                          | Kind     | Notes                                                                                                                                                                                  |
+| ------------------------------- | -------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `daily_checkins`                | table    | One row per person per local day. `mood`, `energy`, `stress`, `sleep_quality`, `effort_vs_results` (each 1–5, each optional), `note` ≤ 280. Clients can only read and delete their own |
+| `weekly_reviews`                | table    | One per person per Monday–Sunday week: `planned`, `completed`, `completion_rate`, `band`, `wellness_score`, `wellness_confidence`, `checkin_days`. Server-written                      |
+| `plan_adjustments`              | table    | One suggestion per review: `kind` (`reduce_15`, `maintain`, `consider_increase_10`), `percent_change`, `reason`, `status` (`proposed`, `accepted`, `declined`, `expired`)              |
+| `log_checkin(...)`              | function | Saves today's check-in (the server decides the date); saving again replaces the day's answers. At least one answer is needed                                                           |
+| `get_weekly_review()`           | function | Builds, once, the review for the last full week and its suggestion; returns the same one after. Expires suggestions left 14 days                                                       |
+| `decide_adjustment(id, accept)` | function | Accepts or declines a suggestion (owner only, only while `proposed`)                                                                                                                   |
+
+**Rules, exactly as specified by the product owner.**
+
+- Completion rate = completed ÷ planned steps in the week. **Skipped steps are neutral** (left out of the count). Fewer than 3 steps gives no review band and no suggestion.
+- Under 60% → suggest about 15% less. 60% to under 75% → maintain. 75% to 85% (85% included) → maintain and keep observing. Over 85% → consider about 10% more.
+- **Never more work when drained or stressed.** If average energy is 2 or lower, or average stress is 4 or higher, an over-85% week still gets "maintain", with a rest-oriented reason.
+- **Wellness score 0–100** with weights mood 30, energy 25, stress 20 (inverted), sleep 15, effort versus results 10. Only answered parts count, so a partial week is weighted on what exists.
+- **Uncertainty is stated.** Confidence is `none` (no check-ins), `low` (1–2 days), `medium` (3–4), `high` (5+). With `none` or `low`, the suggestion says it is a rough or gentle guess.
+- The score drives adaptation only. It is not shown as a grade and is not a diagnosis. Reasons use supportive wording only (checked by a test).
+
+**Privacy.** Check-ins are private to the person, deletable by them, removed with the account (cascade), award **no XP**, and are **never sent to the AI** unless the person opts in (a setting that arrives with the AI Coach step).
+
+**Privileges.** `authenticated`: `select` and `delete` on `daily_checkins`, `select` on the other two tables, `execute` on the three functions. No direct `insert` or `update` on any of them. `anon`: nothing. Errors are `P0001`: `invalid_checkin`, `adjustment_not_found`, `adjustment_not_proposed`.
+
+**Not in B4.** Applying an accepted suggestion to generated plans: it is stored (`accepted` with `percent_change`) for the coach to read in a later step; nothing generates plans yet.
+
 ## Proposed (not implemented)
 
-Each table below is user-owned: RLS on, `user_id` owner column, `select` policy on ownership, and writes limited as described. Sizes are starting points. `user_preferences` and `goals` above are already in the database, and `plan_items` and `tasks` exist in the local database (not hosted); do not recreate them. `xp_rules`, `xp_ledger`, the task functions, `habits` and `habit_checkins` are implemented locally too. The detailed plan for the rest is in [BACKEND_PLAN.md](BACKEND_PLAN.md).
+Each table below is user-owned: RLS on, `user_id` owner column, `select` policy on ownership, and writes limited as described. Sizes are starting points. `user_preferences` and `goals` above are already in the database, and `plan_items` and `tasks` exist in the local database (not hosted); do not recreate them. `xp_rules`, `xp_ledger`, the task functions, `habits`, `habit_checkins`, `daily_checkins`, `weekly_reviews` and `plan_adjustments` are implemented locally too. The detailed plan for the rest is in [BACKEND_PLAN.md](BACKEND_PLAN.md).
 
 ### `milestones`
 

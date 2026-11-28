@@ -3,6 +3,49 @@ export type Json = string | number | boolean | null | { [key: string]: Json | un
 export type Database = {
   public: {
     Tables: {
+      daily_checkins: {
+        Row: {
+          created_at: string;
+          effort_vs_results: number | null;
+          energy: number | null;
+          id: string;
+          local_date: string;
+          mood: number | null;
+          note: string | null;
+          sleep_quality: number | null;
+          stress: number | null;
+          updated_at: string;
+          user_id: string;
+        };
+        ComputedFields: never;
+        Insert: {
+          created_at?: string;
+          effort_vs_results?: number | null;
+          energy?: number | null;
+          id?: string;
+          local_date: string;
+          mood?: number | null;
+          note?: string | null;
+          sleep_quality?: number | null;
+          stress?: number | null;
+          updated_at?: string;
+          user_id?: string;
+        };
+        Update: {
+          created_at?: string;
+          effort_vs_results?: number | null;
+          energy?: number | null;
+          id?: string;
+          local_date?: string;
+          mood?: number | null;
+          note?: string | null;
+          sleep_quality?: number | null;
+          stress?: number | null;
+          updated_at?: string;
+          user_id?: string;
+        };
+        Relationships: [];
+      };
       goals: {
         Row: {
           category: string;
@@ -126,6 +169,51 @@ export type Database = {
             columns: ['goal_id'];
             isOneToOne: false;
             referencedRelation: 'goals';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
+      plan_adjustments: {
+        Row: {
+          created_at: string;
+          decided_at: string | null;
+          id: string;
+          kind: string;
+          percent_change: number;
+          reason: string;
+          review_id: string;
+          status: string;
+          user_id: string;
+        };
+        ComputedFields: never;
+        Insert: {
+          created_at?: string;
+          decided_at?: string | null;
+          id?: string;
+          kind: string;
+          percent_change: number;
+          reason: string;
+          review_id: string;
+          status?: string;
+          user_id: string;
+        };
+        Update: {
+          created_at?: string;
+          decided_at?: string | null;
+          id?: string;
+          kind?: string;
+          percent_change?: number;
+          reason?: string;
+          review_id?: string;
+          status?: string;
+          user_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'plan_adjustments_review_id_fkey';
+            columns: ['review_id'];
+            isOneToOne: true;
+            referencedRelation: 'weekly_reviews';
             referencedColumns: ['id'];
           },
         ];
@@ -332,6 +420,49 @@ export type Database = {
         };
         Relationships: [];
       };
+      weekly_reviews: {
+        Row: {
+          band: string | null;
+          checkin_days: number;
+          completed: number;
+          completion_rate: number | null;
+          created_at: string;
+          id: string;
+          planned: number;
+          user_id: string;
+          week_start: string;
+          wellness_confidence: string;
+          wellness_score: number | null;
+        };
+        ComputedFields: never;
+        Insert: {
+          band?: string | null;
+          checkin_days: number;
+          completed: number;
+          completion_rate?: number | null;
+          created_at?: string;
+          id?: string;
+          planned: number;
+          user_id: string;
+          week_start: string;
+          wellness_confidence: string;
+          wellness_score?: number | null;
+        };
+        Update: {
+          band?: string | null;
+          checkin_days?: number;
+          completed?: number;
+          completion_rate?: number | null;
+          created_at?: string;
+          id?: string;
+          planned?: number;
+          user_id?: string;
+          week_start?: string;
+          wellness_confidence?: string;
+          wellness_score?: number | null;
+        };
+        Relationships: [];
+      };
       xp_ledger: {
         Row: {
           created_at: string;
@@ -425,7 +556,57 @@ export type Database = {
         Returns: undefined;
       };
       complete_task: { Args: { p_task_id: string }; Returns: Json };
+      decide_adjustment: {
+        Args: { p_accept: boolean; p_adjustment_id: string };
+        Returns: {
+          created_at: string;
+          decided_at: string | null;
+          id: string;
+          kind: string;
+          percent_change: number;
+          reason: string;
+          review_id: string;
+          status: string;
+          user_id: string;
+        };
+        SetofOptions: {
+          from: '*';
+          to: 'plan_adjustments';
+          isOneToOne: true;
+          isSetofReturn: false;
+        };
+      };
+      get_weekly_review: { Args: Record<PropertyKey, never>; Returns: Json };
       habit_streak: { Args: { p_habit_id: string }; Returns: Json };
+      log_checkin: {
+        Args: {
+          p_effort_vs_results?: number;
+          p_energy?: number;
+          p_mood?: number;
+          p_note?: string;
+          p_sleep_quality?: number;
+          p_stress?: number;
+        };
+        Returns: {
+          created_at: string;
+          effort_vs_results: number | null;
+          energy: number | null;
+          id: string;
+          local_date: string;
+          mood: number | null;
+          note: string | null;
+          sleep_quality: number | null;
+          stress: number | null;
+          updated_at: string;
+          user_id: string;
+        };
+        SetofOptions: {
+          from: '*';
+          to: 'daily_checkins';
+          isOneToOne: true;
+          isSetofReturn: false;
+        };
+      };
       skip_task: { Args: { p_task_id: string }; Returns: undefined };
       uncheck_habit: { Args: { p_habit_id: string }; Returns: Json };
       undo_task: { Args: { p_task_id: string }; Returns: Json };

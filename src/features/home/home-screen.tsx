@@ -9,6 +9,8 @@ import { goalHrefs } from '@/features/goals/goal-routes';
 import { isFocusGoal } from '@/features/goals/goal-progress';
 import { useGoals } from '@/features/goals/use-goals';
 import { useProfile } from '@/features/profile/use-profile';
+import { CheckinCard } from '@/features/checkins/components/checkin-card';
+import { WeeklyReviewCard } from '@/features/checkins/components/weekly-review-card';
 import { TasksSection } from '@/features/tasks/components/tasks-section';
 import { localDateString } from '@/features/tasks/local-date';
 
@@ -67,11 +69,13 @@ export function HomeScreen({ now = new Date() }: { now?: Date }) {
             </View>
           </Card>
         )}
+        <WeeklyReviewCard />
         <TasksSection
           taskDate={localDateString(now, profile.data?.timezone)}
           goals={goals.data ?? []}
           now={now.getTime()}
         />
+        <CheckinCard localDate={localDateString(now, profile.data?.timezone)} />
         <GoalsSection
           goals={summary.others}
           reached={summary.reached}
