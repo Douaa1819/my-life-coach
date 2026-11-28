@@ -49,6 +49,13 @@ jest.mock('@/features/goals/use-goals', () => ({
   useGoals: () => ({ ...mockGoals, error: null, refetch: mockRefetch }),
 }));
 
+jest.mock('@/features/tasks/components/tasks-section', () => ({
+  TasksSection: ({ taskDate }: { taskDate: string }) => {
+    const { Text } = jest.requireActual('react-native');
+    return <Text>{`Tasks for ${taskDate}`}</Text>;
+  },
+}));
+
 const morning = new Date(2026, 10, 3, 9, 0, 0);
 
 beforeEach(() => {
@@ -57,12 +64,12 @@ beforeEach(() => {
 });
 
 describe('HomeScreen', () => {
-  test('leads with the focus goal and an honest missions line', async () => {
+  test("leads with the focus goal and shows today's plan for the person's date", async () => {
     await renderWithProviders(<HomeScreen now={morning} />);
 
     expect(await screen.findByRole('heading', { name: 'Good morning, Sara' })).toBeOnTheScreen();
     expect(screen.getByText('Train for the spring 10k')).toBeOnTheScreen();
-    expect(screen.getByText(/Daily missions are on their way/)).toBeOnTheScreen();
+    expect(screen.getByText(/Tasks for 2026-11-03/)).toBeOnTheScreen();
     expect(screen.getByRole('button', { name: 'Talk it through' })).toBeOnTheScreen();
     expect(screen.queryByText(/-day streak/)).toBeNull();
     expect(screen.queryByText(/Sample/)).toBeNull();
@@ -104,7 +111,7 @@ describe('HomeScreen', () => {
     await renderWithProviders(<HomeScreen now={morning} />);
 
     expect(screen.getByText('What is one goal you would love to reach?')).toBeOnTheScreen();
-    expect(screen.queryByText(/Daily missions/)).toBeNull();
+    expect(screen.queryByText(/Tasks for/)).toBeNull();
     await fireEvent.press(screen.getByRole('button', { name: 'Add your first goal' }));
     expect(mockPush).toHaveBeenCalledWith('/goal/new');
   });

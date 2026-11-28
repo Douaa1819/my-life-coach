@@ -9,11 +9,12 @@ import { goalHrefs } from '@/features/goals/goal-routes';
 import { isFocusGoal } from '@/features/goals/goal-progress';
 import { useGoals } from '@/features/goals/use-goals';
 import { useProfile } from '@/features/profile/use-profile';
+import { TasksSection } from '@/features/tasks/components/tasks-section';
+import { localDateString } from '@/features/tasks/local-date';
 
 import { FocusCard } from './components/focus-card';
 import { GoalsSection } from './components/goals-section';
 import { HomeHeader } from './components/home-header';
-import { MissionsPlaceholder } from './components/missions-placeholder';
 import { TodayEmpty, TodayError, TodaySkeleton } from './components/today-states';
 import { formatTodayLabel, getGreeting } from './greeting';
 
@@ -66,7 +67,11 @@ export function HomeScreen({ now = new Date() }: { now?: Date }) {
             </View>
           </Card>
         )}
-        <MissionsPlaceholder />
+        <TasksSection
+          taskDate={localDateString(now, profile.data?.timezone)}
+          goals={goals.data ?? []}
+          now={now.getTime()}
+        />
         <GoalsSection
           goals={summary.others}
           reached={summary.reached}

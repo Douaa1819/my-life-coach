@@ -18,7 +18,16 @@ export class DataAccessError extends Error {
   }
 }
 
-const invalidDataCodes = new Set(['22001', '22023', '23502', '23505', '23514', 'PGRST204']);
+// P0001 is what the server functions (complete_task and friends) raise for a rule they enforce.
+const invalidDataCodes = new Set([
+  '22001',
+  '22023',
+  '23502',
+  '23505',
+  '23514',
+  'P0001',
+  'PGRST204',
+]);
 
 export function toDataAccessError(
   error: Pick<PostgrestError, 'code' | 'message'>,

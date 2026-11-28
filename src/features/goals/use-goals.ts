@@ -1,6 +1,7 @@
 import { skipToken, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 import { useSessionUser } from '@/features/auth/auth-provider';
+import { tasksQueryKeys } from '@/features/tasks/use-tasks';
 
 import {
   createGoal,
@@ -46,6 +47,8 @@ function useGoalMutation<Input>(mutationFn: (input: Input) => Promise<Goal>) {
       if (!user) return;
       queryClient.setQueryData(goalsQueryKeys.detail(user.id, goal.id), goal);
       void queryClient.invalidateQueries({ queryKey: goalsQueryKeys.all(user.id) });
+      // Reaching or reopening a goal changes the XP the server holds.
+      void queryClient.invalidateQueries({ queryKey: tasksQueryKeys.xp(user.id) });
     },
   });
 }

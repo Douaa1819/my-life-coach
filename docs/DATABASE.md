@@ -66,7 +66,7 @@ Onboarding still writes the first row through `complete_onboarding()`. The goals
 
 **Policies.** `select` / `insert` / `update` / `delete` where `(select auth.uid()) = user_id`.
 
-Home reads the signed-in user's goals (a summary of active and completed counts, plus a preview of active and paused goals). Home does not read `plan_items` or `tasks` yet (they exist in the local database only, see below): it shows a "Daily missions are on their way" placeholder instead of sample data. There is no streak table.
+Home reads the signed-in user's goals (a summary of active and completed counts, plus a preview of active and paused goals). Home also shows today's `tasks` and the person's XP total and level (local database only for now, see below). With no steps it says so; nothing is made up. There is no streak table yet.
 
 ### `complete_onboarding(...)`
 
@@ -141,9 +141,36 @@ Unique `(user_id, task_date, position)`; partial indexes on `goal_id` and `plan_
 
 **Not in B1.** Nothing changes `status` yet, so every task stays `pending`: completion is a server function that arrives together with XP (B2). There is no `xp_awarded`, `habit_id`, SMART columns on `goals`, or `discovery_answers`; those belong to later steps in the plan.
 
+### XP and rewards (B2: local database only)
+
+> **Deployment status.** Migration `20261128100000_xp_ledger.sql` is **applied to the local Supabase stack only** and validated with pgTAP (`supabase/tests/database/xp_ledger.test.sql`, 76 assertions). It is **not** applied to any hosted or production project. The app uses it on Today (tasks, XP chip). Design: [BACKEND_PLAN.md](BACKEND_PLAN.md), section 3.
+
+XP is decided by the database, never by the app. Clients can read the rules, their own ledger and their own totals; they cannot write any of it.
+
+| Object                   | Kind     | Notes                                                                                                                                |
+| ------------------------ | -------- | ------------------------------------------------------------------------------------------------------------------------------------ |
+| `xp_rules`               | table    | `kind` PK (`task_completed`, `goal_reached`), `base_xp`, `daily_cap`, `active`. Read-only for clients                                |
+| `xp_ledger`              | table    | Append-only awards: `user_id`, `kind`, `ref_id`, `xp`, `occurred_on` (local date), `voided_at`. **Unique `(user_id, kind, ref_id)`** |
+| `tasks.xp_awarded`       | column   | XP the server awarded for the task. Not granted to clients                                                                           |
+| `xp_totals`, `xp_today`  | views    | `security_invoker`, so row level security applies. Level _n_ starts at 100 × (n − 1)² XP                                             |
+| `complete_task(task_id)` | function | Security definer; `authenticated` only                                                                                               |
+| `undo_task(task_id)`     | function | Same; only within 10 minutes of the completion                                                                                       |
+| `skip_task(task_id)`     | function | Same; no XP and no penalty                                                                                                           |
+| `goals_award_xp` trigger | trigger  | Awards `goal_reached` when a goal becomes `completed`; voids it when the goal is reopened                                            |
+
+**Starting values** (tunable in `xp_rules` without an app release): `task_completed` = 10 × the task's effort (1 to 3), capped at 100 XP per local day; `goal_reached` = 100, capped at 200 XP per local day.
+
+**What the functions check.** The caller owns the row (`auth.uid()`), the task is `pending`, and `task_date` is today or yesterday in the person's own time zone (`profiles.timezone`). Errors are stable codes raised as `P0001`: `task_not_found`, `task_not_pending`, `task_date_out_of_window`, `task_not_completed`, `undo_window_passed`; `28000` for `not_authenticated`.
+
+**No double payment.** The unique key makes every award idempotent: repeating a request, two devices racing, or undo then redo can never pay twice. Redoing after an undo restores the same ledger row (with the daily cap applied again). Reopening a reached goal voids its XP; reaching it again restores it.
+
+**Privileges.** `authenticated`: `select` on the four read objects and `execute` on the three functions. No `insert`, `update` or `delete` on `xp_ledger`, `xp_rules` or `tasks.status`/`completed_at`/`xp_awarded`. `anon`: nothing.
+
+**Not in B2.** Habit, check-in and plan-item XP, and the streak views, arrive with later steps. A deleted goal keeps its ledger row.
+
 ## Proposed (not implemented)
 
-Each table below is user-owned: RLS on, `user_id` owner column, `select` policy on ownership, and writes limited as described. Sizes are starting points. `user_preferences` and `goals` above are already in the database, and `plan_items` and `tasks` exist in the local database (not hosted); do not recreate them. The detailed plan for the rest is in [BACKEND_PLAN.md](BACKEND_PLAN.md).
+Each table below is user-owned: RLS on, `user_id` owner column, `select` policy on ownership, and writes limited as described. Sizes are starting points. `user_preferences` and `goals` above are already in the database, and `plan_items` and `tasks` exist in the local database (not hosted); do not recreate them. `xp_rules`, `xp_ledger` and the task functions are implemented locally too. The detailed plan for the rest is in [BACKEND_PLAN.md](BACKEND_PLAN.md).
 
 ### `milestones`
 
@@ -174,23 +201,11 @@ A trigger checks that `goal_id` belongs to the same `user_id`, so nobody can att
 
 ### `missions`
 
-Replaced by `tasks`, which is implemented locally (see above). Completion, `xp_awarded` and the XP ledger arrive with B2.
+Replaced by `tasks`, which is implemented locally (see above), with completion and XP from B2.
 
 ### `progress_records`
 
-Append-only ledger of progress events. Read by the user, written only by server functions.
-
-| Column        | Type                 | Notes                                                                     |
-| ------------- | -------------------- | ------------------------------------------------------------------------- |
-| `id`          | `bigint` identity PK |                                                                           |
-| `user_id`     | `uuid` FK            | Index `(user_id, occurred_on desc)`                                       |
-| `kind`        | `text`               | `mission_completed`, `habit_checked`, `milestone_reached`, `streak_bonus` |
-| `ref_id`      | `uuid` null          | The mission, habit or milestone                                           |
-| `xp`          | `integer`            | ≥ 0                                                                       |
-| `occurred_on` | `date`               | User's local date                                                         |
-| `created_at`  | `timestamptz`        |                                                                           |
-
-Client: `select` own only. Streaks and totals are views or functions over this table, never stored values a client can change.
+Implemented as `xp_ledger` (see above). Habit and milestone kinds will be added to it by later steps; streaks and totals stay views or functions over the ledger, never stored values a client can change.
 
 ### `coach_conversations`
 

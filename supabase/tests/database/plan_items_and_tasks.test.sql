@@ -296,7 +296,7 @@ select throws_ok(
   '42501', null, 'Alice cannot complete a task herself');
 select throws_ok(
   $$ update public.tasks set xp_awarded = 5 where id = 'a3000000-0000-4000-8000-000000000001' $$,
-  '42703', null, 'there is no xp column on tasks yet');
+  '42501', null, 'xp_awarded exists but clients cannot write it');
 select lives_ok(
   $$ update public.tasks set task_date = '2027-01-06' where id = 'a3000000-0000-4000-8000-000000000001' $$,
   'Alice can move a task to another day');

@@ -163,6 +163,7 @@ export type Database = {
           title: string;
           updated_at: string;
           user_id: string;
+          xp_awarded: number;
         };
         ComputedFields: never;
         Insert: {
@@ -180,6 +181,7 @@ export type Database = {
           title: string;
           updated_at?: string;
           user_id?: string;
+          xp_awarded?: number;
         };
         Update: {
           completed_at?: string | null;
@@ -196,6 +198,7 @@ export type Database = {
           title?: string;
           updated_at?: string;
           user_id?: string;
+          xp_awarded?: number;
         };
         Relationships: [
           {
@@ -245,9 +248,81 @@ export type Database = {
         };
         Relationships: [];
       };
+      xp_ledger: {
+        Row: {
+          created_at: string;
+          id: number;
+          kind: string;
+          occurred_on: string;
+          ref_id: string;
+          user_id: string;
+          voided_at: string | null;
+          xp: number;
+        };
+        ComputedFields: never;
+        Insert: {
+          created_at?: string;
+          id?: never;
+          kind: string;
+          occurred_on: string;
+          ref_id: string;
+          user_id: string;
+          voided_at?: string | null;
+          xp: number;
+        };
+        Update: {
+          created_at?: string;
+          id?: never;
+          kind?: string;
+          occurred_on?: string;
+          ref_id?: string;
+          user_id?: string;
+          voided_at?: string | null;
+          xp?: number;
+        };
+        Relationships: [];
+      };
+      xp_rules: {
+        Row: {
+          active: boolean;
+          base_xp: number;
+          daily_cap: number | null;
+          kind: string;
+        };
+        ComputedFields: never;
+        Insert: {
+          active?: boolean;
+          base_xp: number;
+          daily_cap?: number | null;
+          kind: string;
+        };
+        Update: {
+          active?: boolean;
+          base_xp?: number;
+          daily_cap?: number | null;
+          kind?: string;
+        };
+        Relationships: [];
+      };
     };
     Views: {
-      [_ in never]: never;
+      xp_today: {
+        Row: {
+          user_id: string;
+          xp_today: number | null;
+        };
+        ComputedFields: never;
+        Relationships: [];
+      };
+      xp_totals: {
+        Row: {
+          level: number | null;
+          total_xp: number | null;
+          user_id: string;
+        };
+        ComputedFields: never;
+        Relationships: [];
+      };
     };
     Functions: {
       complete_onboarding: {
@@ -264,6 +339,9 @@ export type Database = {
         };
         Returns: undefined;
       };
+      complete_task: { Args: { p_task_id: string }; Returns: Json };
+      skip_task: { Args: { p_task_id: string }; Returns: undefined };
+      undo_task: { Args: { p_task_id: string }; Returns: Json };
     };
     Enums: {
       [_ in never]: never;
