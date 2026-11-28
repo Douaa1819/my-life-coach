@@ -53,6 +53,12 @@
       ],
       "expo-secure-store",
       [
+        "expo-notifications",
+        {
+          "color": "#7968E8"
+        }
+      ],
+      [
         "expo-audio",
         {
           "microphonePermission": false

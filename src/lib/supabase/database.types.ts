@@ -173,6 +173,49 @@ export type Database = {
           },
         ];
       };
+      notification_preferences: {
+        Row: {
+          created_at: string;
+          enabled: boolean;
+          evening_time: string | null;
+          max_per_day: number;
+          morning_time: string | null;
+          permission_asked_at: string | null;
+          quiet_end: string;
+          quiet_start: string;
+          types: string[];
+          updated_at: string;
+          user_id: string;
+        };
+        ComputedFields: never;
+        Insert: {
+          created_at?: string;
+          enabled?: boolean;
+          evening_time?: string | null;
+          max_per_day?: number;
+          morning_time?: string | null;
+          permission_asked_at?: string | null;
+          quiet_end?: string;
+          quiet_start?: string;
+          types?: string[];
+          updated_at?: string;
+          user_id?: string;
+        };
+        Update: {
+          created_at?: string;
+          enabled?: boolean;
+          evening_time?: string | null;
+          max_per_day?: number;
+          morning_time?: string | null;
+          permission_asked_at?: string | null;
+          quiet_end?: string;
+          quiet_start?: string;
+          types?: string[];
+          updated_at?: string;
+          user_id?: string;
+        };
+        Relationships: [];
+      };
       plan_adjustments: {
         Row: {
           created_at: string;

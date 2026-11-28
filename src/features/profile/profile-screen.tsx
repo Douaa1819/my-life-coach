@@ -17,6 +17,8 @@ import { useZodForm } from '@/lib/forms/use-zod-form';
 import { DataAccessError } from '@/lib/supabase/data-access-error';
 
 import { DISPLAY_NAME_MAX_LENGTH, type Profile, profileUpdateSchema } from './profile.schema';
+import { RemindersSetting } from '@/features/notifications/components/reminders-setting';
+
 import { SoundSetting, VibrationSetting } from './sound-setting';
 import { useProfile, useUpdateProfile } from './use-profile';
 
@@ -148,6 +150,10 @@ export function ProfileScreen() {
 
       <Card>
         <DisplayNameForm key={data.id} profile={data} />
+      </Card>
+
+      <Card>
+        <RemindersSetting />
       </Card>
 
       <Card>

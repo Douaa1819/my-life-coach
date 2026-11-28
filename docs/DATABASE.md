@@ -218,9 +218,33 @@ XP is decided by the database, never by the app. Clients can read the rules, the
 
 **Not in B4.** Applying an accepted suggestion to generated plans: it is stored (`accepted` with `percent_change`) for the coach to read in a later step; nothing generates plans yet.
 
+### Reminder preferences (B5: local database only)
+
+> **Deployment status.** Migration `20261128160000_notification_preferences.sql` is **applied to the local Supabase stack only** and validated with pgTAP (`supabase/tests/database/notification_preferences.test.sql`, 40 assertions). It is **not** applied to any hosted or production project. Design: [BACKEND_PLAN.md](BACKEND_PLAN.md), section 6 (phase 1).
+
+Reminders are **scheduled on the device** with `expo-notifications`, only after the person turns them on and the phone allows them. The server stores the person's choices so they follow them to a new phone. **It sends nothing and stores no push tokens**; server push is a later, separately approved phase.
+
+| Column                         | Type               | Notes                                                                         |
+| ------------------------------ | ------------------ | ----------------------------------------------------------------------------- |
+| `user_id`                      | `uuid` PK, FK      | `default auth.uid()`, cascade. Not writable after creation                    |
+| `enabled`                      | `boolean`          | **Default false.** Nothing is scheduled until true                            |
+| `morning_time`, `evening_time` | `time` null        | The person's local time. Must not fall inside quiet hours (check constraint)  |
+| `quiet_start`, `quiet_end`     | `time`             | Default 21:30 to 08:00; may cross midnight; start is inside, end is outside   |
+| `max_per_day`                  | `smallint`         | 0 to 2, default 2. **Not writable by clients**                                |
+| `types`                        | `text[]`           | Subset of `morning_plan`, `evening_checkin`, `weekly_review`, `gentle_return` |
+| `permission_asked_at`          | `timestamptz` null | When the phone's prompt was last shown                                        |
+
+The migration copies an onboarding `reminder_time` into `morning_time` (still switched off) when it is outside the default quiet hours.
+
+**Rules enforced in the app's planner** (`src/features/notifications/schedule.ts`, tested): no reminder inside quiet hours, never more than two on a day (earlier items in the priority list win; the one-off welcome-back note is skipped rather than squeezed onto a full day), the welcome-back note is a single date a few days ahead that moves forward each time the app opens, and the weekly look-back falls on Monday.
+
+**Content** is a fixed catalogue with no personal data and no pressure wording (a test scans it for streaks, "missed", "don't forget", numbers and similar).
+
+**Privileges.** `authenticated`: `select`, `delete`, `insert` and `update` of every column except `user_id` and `max_per_day`. `anon`: nothing.
+
 ## Proposed (not implemented)
 
-Each table below is user-owned: RLS on, `user_id` owner column, `select` policy on ownership, and writes limited as described. Sizes are starting points. `user_preferences` and `goals` above are already in the database, and `plan_items` and `tasks` exist in the local database (not hosted); do not recreate them. `xp_rules`, `xp_ledger`, the task functions, `habits`, `habit_checkins`, `daily_checkins`, `weekly_reviews` and `plan_adjustments` are implemented locally too. The detailed plan for the rest is in [BACKEND_PLAN.md](BACKEND_PLAN.md).
+Each table below is user-owned: RLS on, `user_id` owner column, `select` policy on ownership, and writes limited as described. Sizes are starting points. `user_preferences` and `goals` above are already in the database, and `plan_items` and `tasks` exist in the local database (not hosted); do not recreate them. `xp_rules`, `xp_ledger`, the task functions, `habits`, `habit_checkins`, `daily_checkins`, `weekly_reviews`, `plan_adjustments` and `notification_preferences` are implemented locally too. The detailed plan for the rest is in [BACKEND_PLAN.md](BACKEND_PLAN.md).
 
 ### `milestones`
 

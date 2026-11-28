@@ -25,3 +25,23 @@ jest.mock('expo-haptics', () => ({
 // Form and journey tests drive many renders with Reanimated and the React Compiler; on a
 // busy machine they can pass the 5 s default without anything being wrong.
 jest.setTimeout(20000);
+
+// Notifications need a real phone. Tests check what would be scheduled, not the OS.
+jest.mock('expo-notifications', () => ({
+  SchedulableTriggerInputTypes: { WEEKLY: 'weekly', DATE: 'date' },
+  AndroidImportance: { DEFAULT: 3 },
+  scheduleNotificationAsync: jest.fn(async () => 'id'),
+  cancelAllScheduledNotificationsAsync: jest.fn(async () => undefined),
+  getPermissionsAsync: jest.fn(async () => ({
+    granted: true,
+    canAskAgain: true,
+    status: 'granted',
+  })),
+  requestPermissionsAsync: jest.fn(async () => ({
+    granted: true,
+    canAskAgain: true,
+    status: 'granted',
+  })),
+  setNotificationChannelAsync: jest.fn(async () => null),
+  setNotificationHandler: jest.fn(),
+}));

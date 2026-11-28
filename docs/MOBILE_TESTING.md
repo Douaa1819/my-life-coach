@@ -6,15 +6,15 @@ Identifiers (Expo config): Android package and iOS bundle identifier are both `c
 
 "Verified" means it was actually run. "Code-level" means it was read and reasoned about but not executed on that platform. **iOS has not been built or run on any device or simulator.**
 
-| Area                                                | Android                                                         | iOS                                           |
-| --------------------------------------------------- | --------------------------------------------------------------- | --------------------------------------------- |
-| App bundle compiles (Metro)                         | Verified (1,777 modules)                                        | Not run                                       |
-| Resolved native config (permissions, identifiers)   | Verified with `expo config --type introspect`                   | Verified with `expo config --type introspect` |
-| Runs on an emulator or device                       | **Not verified**: emulator unstable on this machine (see below) | Not verified                                  |
-| Navigation, auth, onboarding, Goals, Today, Profile | Not verified                                                    | Not verified                                  |
-| Sound (`expo-audio`), haptics (`expo-haptics`)      | Not verified on a device                                        | Not verified on a device                      |
-| Unit and component tests (Jest)                     | Platform-independent; pass                                      | Platform-independent; pass                    |
-| Web (Chrome, 390 px and 1280 px)                    | Verified for Today                                              | n/a                                           |
+| Area                                                | Android                                                         | iOS                                                                           |
+| --------------------------------------------------- | --------------------------------------------------------------- | ----------------------------------------------------------------------------- |
+| JavaScript bundle compiles (Metro)                  | Verified (HTTP 200, 9.4 MB, after B5)                           | Verified (HTTP 200, 9.0 MB, after B5). **Not run on any device or simulator** |
+| Resolved native config (permissions, identifiers)   | Verified with `expo config --type introspect`                   | Verified with `expo config --type introspect`                                 |
+| Runs on an emulator or device                       | **Not verified**: emulator unstable on this machine (see below) | Not verified                                                                  |
+| Navigation, auth, onboarding, Goals, Today, Profile | Not verified                                                    | Not verified                                                                  |
+| Sound (`expo-audio`), haptics (`expo-haptics`)      | Not verified on a device                                        | Not verified on a device                                                      |
+| Unit and component tests (Jest)                     | Platform-independent; pass                                      | Platform-independent; pass                                                    |
+| Web (Chrome, 390 px and 1280 px)                    | Verified for Today                                              | n/a                                                                           |
 
 **Android emulator.** The Pixel_10a AVD (Android 17, 16 KB page image, 2 GB RAM) boots but the Android `system_server` crashed twice and the system UI stopped responding while the machine had under 1 GB of free memory. The app was not observed running. Retry after closing heavy applications; if it is still unstable the next options are a lighter system image (needs approval to download) or a physical Android phone.
 
