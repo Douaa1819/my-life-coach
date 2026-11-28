@@ -1,4 +1,4 @@
-import { Vibration } from 'react-native';
+import * as Haptics from 'expo-haptics';
 
 import { vibrate } from '../vibrate';
 import { useVibrationPreference } from '../vibration-preference';
@@ -10,19 +10,34 @@ jest.mock('@/lib/sound/preference-storage', () => ({
 
 describe('vibrate', () => {
   beforeEach(() => {
-    jest.spyOn(Vibration, 'vibrate').mockImplementation(() => undefined);
+    jest.clearAllMocks();
     useVibrationPreference.setState({ enabled: false, hydrated: true });
   });
-  afterEach(() => jest.restoreAllMocks());
 
   test('is off until the person turns it on', () => {
     vibrate('taskDone');
-    expect(Vibration.vibrate).not.toHaveBeenCalled();
+    vibrate('goalReached');
+    expect(Haptics.impactAsync).not.toHaveBeenCalled();
+    expect(Haptics.notificationAsync).not.toHaveBeenCalled();
   });
 
-  test('buzzes briefly when on', () => {
+  test('a finished task is a light tap', () => {
+    useVibrationPreference.getState().setEnabled(true);
+    vibrate('taskDone');
+    expect(Haptics.impactAsync).toHaveBeenCalledWith(Haptics.ImpactFeedbackStyle.Light);
+  });
+
+  test('a reached goal uses the system success pattern', () => {
     useVibrationPreference.getState().setEnabled(true);
     vibrate('goalReached');
-    expect(Vibration.vibrate).toHaveBeenCalledTimes(1);
+    expect(Haptics.notificationAsync).toHaveBeenCalledWith(
+      Haptics.NotificationFeedbackType.Success,
+    );
+  });
+
+  test('a failing haptic engine never throws', () => {
+    useVibrationPreference.getState().setEnabled(true);
+    jest.mocked(Haptics.impactAsync).mockRejectedValueOnce(new Error('no motor'));
+    expect(() => vibrate('taskDone')).not.toThrow();
   });
 });

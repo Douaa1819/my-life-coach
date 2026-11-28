@@ -57,7 +57,7 @@ export function SoundSetting() {
   );
 }
 
-/** A light buzz on completions. Off by default; it does nothing on the web. */
+/** Gentle haptics on completions. Off by default; it does nothing on the web. */
 export function VibrationSetting() {
   const enabled = useVibrationPreference((state) => state.enabled);
   const setEnabled = useVibrationPreference((state) => state.setEnabled);
@@ -69,8 +69,8 @@ export function VibrationSetting() {
 
   return (
     <SwitchRow
-      label="Vibration"
-      description="A light buzz when you finish something."
+      label="Haptic feedback"
+      description="A gentle tap when you finish something. Follows your phone's own haptics setting."
       enabled={enabled}
       onChange={setEnabled}
     />
