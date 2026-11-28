@@ -46,6 +46,90 @@ export type Database = {
         };
         Relationships: [];
       };
+      habit_checkins: {
+        Row: {
+          created_at: string;
+          habit_id: string;
+          id: string;
+          local_date: string;
+          user_id: string;
+        };
+        ComputedFields: never;
+        Insert: {
+          created_at?: string;
+          habit_id: string;
+          id?: string;
+          local_date: string;
+          user_id?: string;
+        };
+        Update: {
+          created_at?: string;
+          habit_id?: string;
+          id?: string;
+          local_date?: string;
+          user_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'habit_checkins_habit_id_fkey';
+            columns: ['habit_id'];
+            isOneToOne: false;
+            referencedRelation: 'habits';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
+      habits: {
+        Row: {
+          cadence: string;
+          created_at: string;
+          days_of_week: number[];
+          goal_id: string | null;
+          id: string;
+          is_active: boolean;
+          rest_days_per_week: number;
+          target_per_period: number;
+          title: string;
+          updated_at: string;
+          user_id: string;
+        };
+        ComputedFields: never;
+        Insert: {
+          cadence?: string;
+          created_at?: string;
+          days_of_week?: number[];
+          goal_id?: string | null;
+          id?: string;
+          is_active?: boolean;
+          rest_days_per_week?: number;
+          target_per_period?: number;
+          title: string;
+          updated_at?: string;
+          user_id?: string;
+        };
+        Update: {
+          cadence?: string;
+          created_at?: string;
+          days_of_week?: number[];
+          goal_id?: string | null;
+          id?: string;
+          is_active?: boolean;
+          rest_days_per_week?: number;
+          target_per_period?: number;
+          title?: string;
+          updated_at?: string;
+          user_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'habits_goal_id_fkey';
+            columns: ['goal_id'];
+            isOneToOne: false;
+            referencedRelation: 'goals';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
       plan_items: {
         Row: {
           created_at: string;
@@ -325,6 +409,7 @@ export type Database = {
       };
     };
     Functions: {
+      check_habit: { Args: { p_habit_id: string }; Returns: Json };
       complete_onboarding: {
         Args: {
           p_coach_tone: string;
@@ -340,7 +425,9 @@ export type Database = {
         Returns: undefined;
       };
       complete_task: { Args: { p_task_id: string }; Returns: Json };
+      habit_streak: { Args: { p_habit_id: string }; Returns: Json };
       skip_task: { Args: { p_task_id: string }; Returns: undefined };
+      uncheck_habit: { Args: { p_habit_id: string }; Returns: Json };
       undo_task: { Args: { p_task_id: string }; Returns: Json };
     };
     Enums: {

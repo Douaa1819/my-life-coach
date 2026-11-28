@@ -60,7 +60,7 @@ select ok(not has_function_privilege('anon', 'public.complete_task(uuid)', 'exec
 set local role authenticated;
 select set_config('request.jwt.claims', '{"sub": "11111111-1111-4111-8111-111111111111", "role": "authenticated"}', true);
 
-select is((select count(*)::int from public.xp_rules), 2, 'Alice can read both XP rules');
+select is((select count(*)::int from public.xp_rules), 3, 'Alice can read all three XP rules');
 select throws_ok(
   $$ insert into public.xp_ledger (user_id, kind, ref_id, xp, occurred_on)
      values ('11111111-1111-4111-8111-111111111111', 'goal_reached', gen_random_uuid(), 999, current_date) $$,

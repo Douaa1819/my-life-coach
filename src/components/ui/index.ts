@@ -7,6 +7,7 @@ export { CoachBubble } from './coach-bubble';
 export { Icon, type IconName } from './icon';
 export { InlineMessage } from './inline-message';
 export { PasswordField } from './password-field';
+export { PillGroup } from './pill-group';
 export { ProgressBar } from './progress-bar';
 export { Screen } from './screen';
 export { Skeleton } from './skeleton';

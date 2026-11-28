@@ -13,7 +13,7 @@ import {
   taskEfforts,
   taskTitleSchema,
 } from '../task.schema';
-import { PillGroup } from './pill-group';
+import { PillGroup } from '@/components/ui/pill-group';
 
 const NO_GOAL = 'none';
 const GOAL_CHOICES = 4;

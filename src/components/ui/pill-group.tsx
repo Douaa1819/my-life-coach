@@ -1,6 +1,6 @@
 import { Pressable, StyleSheet, View } from 'react-native';
 
-import { Text } from '@/components/ui';
+import { Text } from './text';
 import { fontFamilies, layout, radius, spacing, useTheme } from '@/design';
 
 type PillGroupProps<Value extends string | number> = {

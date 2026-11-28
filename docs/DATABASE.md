@@ -66,7 +66,7 @@ Onboarding still writes the first row through `complete_onboarding()`. The goals
 
 **Policies.** `select` / `insert` / `update` / `delete` where `(select auth.uid()) = user_id`.
 
-Home reads the signed-in user's goals (a summary of active and completed counts, plus a preview of active and paused goals). Home also shows today's `tasks` and the person's XP total and level (local database only for now, see below). With no steps it says so; nothing is made up. There is no streak table yet.
+Home reads the signed-in user's goals (a summary of active and completed counts, plus a preview of active and paused goals). Home also shows today's `tasks` and the person's XP total and level (local database only for now, see below). With no steps it says so; nothing is made up. Habit streaks are computed on demand; there is no streak table.
 
 ### `complete_onboarding(...)`
 
@@ -168,9 +168,31 @@ XP is decided by the database, never by the app. Clients can read the rules, the
 
 **Not in B2.** Habit, check-in and plan-item XP, and the streak views, arrive with later steps. A deleted goal keeps its ledger row.
 
+### Habits and tolerant streaks (B3: local database only)
+
+> **Deployment status.** Migration `20261128120000_habits.sql` is **applied to the local Supabase stack only** and validated with pgTAP (`supabase/tests/database/habits.test.sql`, 80 assertions). It is **not** applied to any hosted or production project. The Habits tab uses it. Design: [BACKEND_PLAN.md](BACKEND_PLAN.md), section 4.
+
+| Object                    | Kind     | Notes                                                                                                                                                                                                                                                                   |
+| ------------------------- | -------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `habits`                  | table    | `title` 1–80, `cadence` (`daily`, `weekdays`, `weekly`, `custom`), `days_of_week` (0 = Sunday, custom only), `target_per_period` 1–14 (weekly 1–7), `rest_days_per_week` 0–2 (default 1), `is_active`, optional `goal_id` (same-owner trigger, set null on goal delete) |
+| `habit_checkins`          | table    | One row per habit per local day, unique `(habit_id, local_date)`. Clients can only read; written by `check_habit()`                                                                                                                                                     |
+| `check_habit(habit_id)`   | function | Security definer. Checks in for today in the person's time zone (never a past or future day), awards `habit_checked` XP once                                                                                                                                            |
+| `uncheck_habit(habit_id)` | function | Removes today's check-in and voids its XP; checking in again restores the same award                                                                                                                                                                                    |
+| `habit_streak(habit_id)`  | function | Returns `current`, `best`, `checked_today`, `days_since_last`, `welcome_back`. Owner only                                                                                                                                                                               |
+| `xp_rules`                | row      | `habit_checked` = 5 XP, capped at 50 XP per local day. The XP award key is derived from habit and date, so no day pays twice                                                                                                                                            |
+
+**Streaks are computed, never stored**, so a client cannot edit one. They are tolerant on purpose:
+
+- A scheduled day with a check-in adds one. **Today never counts as a miss**; it is still open.
+- A miss is forgiven while no more than `rest_days_per_week` misses fall in any 7 days. One more, and the run restarts quietly. The best run is always kept.
+- `weekdays` ignores weekends; `custom` counts only the chosen days; `weekly` counts weeks that reach the target, and one missed week in four is forgiven when rest days are allowed.
+- There is no "broken streak" flag. After a break of 3 or more days `welcome_back` is true and the app says so kindly.
+
+**Privileges.** `authenticated`: `select`, `insert (goal_id, title, cadence, days_of_week, target_per_period, rest_days_per_week)`, `update` of the same plus `is_active`, and `delete` on `habits`; `select` only on `habit_checkins`; `execute` on the three functions. `anon`: nothing. Errors are stable codes raised as `P0001`: `habit_not_found`, `habit_inactive`.
+
 ## Proposed (not implemented)
 
-Each table below is user-owned: RLS on, `user_id` owner column, `select` policy on ownership, and writes limited as described. Sizes are starting points. `user_preferences` and `goals` above are already in the database, and `plan_items` and `tasks` exist in the local database (not hosted); do not recreate them. `xp_rules`, `xp_ledger` and the task functions are implemented locally too. The detailed plan for the rest is in [BACKEND_PLAN.md](BACKEND_PLAN.md).
+Each table below is user-owned: RLS on, `user_id` owner column, `select` policy on ownership, and writes limited as described. Sizes are starting points. `user_preferences` and `goals` above are already in the database, and `plan_items` and `tasks` exist in the local database (not hosted); do not recreate them. `xp_rules`, `xp_ledger`, the task functions, `habits` and `habit_checkins` are implemented locally too. The detailed plan for the rest is in [BACKEND_PLAN.md](BACKEND_PLAN.md).
 
 ### `milestones`
 
@@ -187,17 +209,7 @@ A trigger checks that `goal_id` belongs to the same `user_id`, so nobody can att
 
 ### `habits`
 
-| Column                     | Type           | Notes                                   |
-| -------------------------- | -------------- | --------------------------------------- |
-| `id`                       | `uuid` PK      |                                         |
-| `user_id`                  | `uuid` FK      | Index `(user_id, is_active)`            |
-| `goal_id`                  | `uuid` FK null | Same-owner trigger as milestones        |
-| `title`                    | `text`         | 1–80                                    |
-| `cadence`                  | `text`         | `daily`, `weekdays`, `weekly`, `custom` |
-| `days_of_week`             | `smallint[]`   | 0–6, used when cadence is `custom`      |
-| `target_per_period`        | `smallint`     | 1–14                                    |
-| `is_active`                | `boolean`      |                                         |
-| `created_at`, `updated_at` | `timestamptz`  |                                         |
+Implemented locally (see above). `habit_checkins` replaces the streak-snapshot idea: streaks are computed from check-ins.
 
 ### `missions`
 
